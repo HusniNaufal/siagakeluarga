@@ -9,6 +9,8 @@ import * as kit from '../controllers/kit.controller.js';
 import * as drill from '../controllers/drill.controller.js';
 import * as share from '../controllers/share.controller.js';
 
+import { aiRouter, adminRouter } from './ai.routes.js';
+
 const router = Router();
 
 // ---------- Schemas ----------
@@ -92,5 +94,9 @@ router.patch('/drills/:id', authenticate, validate({ params: idParam, body: dril
 
 // Public emergency card
 router.get('/share/:token', share.getShareCard);
+
+// AI (Gemini + RAG) & admin
+router.use('/ai', aiRouter);
+router.use('/admin', adminRouter);
 
 export default router;
