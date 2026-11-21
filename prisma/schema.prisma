@@ -1,13 +1,130 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum JenisBencana {
+  GEMPA
+  TSUNAMI
+  BANJIR
+  LONGSOR
+  CUACA_EKSTREM
+}
+
+enum TingkatRisiko {
+  RENDAH
+  SEDANG
+  TINGGI
+}
+
+enum KelompokUmur {
+  BALITA
+  ANAK
+  DEWASA
+  LANSIA
+}
+
+model User {
+  id            String     @id @default(uuid())
+  nama          String
+  email         String     @unique
+  password_hash String
+  role          Role       @default(USER)
+  created_at    DateTime   @default(now())
+  household     Household?
+}
+
+model Region {
+  id              Int             @id @default(autoincrement())
+  kode_wilayah    String
+  kecamatan       String
+  kab_kota        String
+  hazard_zones    HazardZone[]
+  assembly_points AssemblyPoint[]
+  households      Household[]
+}
+
+model HazardZone {
+  id            Int           @id @default(autoincrement())
+  region_id     Int
+  jenis_bencana JenisBencana
+  tingkat       TingkatRisiko
+  sumber        String
+  region        Region        @relation(fields: [region_id], references: [id], onDelete: Cascade)
+}
+
+model AssemblyPoint {
+  id        Int    @id @default(autoincrement())
+  region_id Int
+  nama      String
+  lat       Float
+  lng       Float
+  region    Region @relation(fields: [region_id], references: [id], onDelete: Cascade)
+}
+
+model Household {
+  id              String          @id @default(uuid())
+  user_id         String          @unique
+  region_id       Int?
+  lat             Float?
+  lng             Float?
+  share_token     String          @unique @default(uuid())
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  region          Region?         @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  members         Member[]
+  emergency_plans EmergencyPlan[]
+  kit_items       KitItem[]
+  drills          Drill[]
+}
+
+model Member {
+  id               String       @id @default(uuid())
+  household_id     String
+  panggilan        String
+  kelompok_umur    KelompokUmur
+  kebutuhan_khusus String?
+  household        Household    @relation(fields: [household_id], references: [id], onDelete: Cascade)
+}
+
+model EmergencyPlan {
+  id           String    @id @default(uuid())
+  household_id String
+  konten       Json
+  model_ai     String
+  created_at   DateTime  @default(now())
+  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+}
+
+model KitItem {
+  id           String    @id @default(uuid())
+  household_id String
+  nama_item    String
+  status       Boolean   @default(false)
+  kadaluarsa   DateTime?
+  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+}
+
+model Drill {
+  id           String    @id @default(uuid())
+  household_id String
+  jadwal       DateTime
+  skor         Int?
+  household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
+}
+
+model GuideChunk {
+  id        Int                       @id @default(autoincrement())
+  sumber    String
+  isi       String                    @db.Text
+  embedding Unsupported("vector(768)")?
 }
