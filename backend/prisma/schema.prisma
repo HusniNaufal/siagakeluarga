@@ -5,8 +5,6 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  directUrl  = env("DIRECT_URL")
   extensions = [vector]
 }
 
@@ -15,137 +13,118 @@ enum Role {
   ADMIN
 }
 
-enum AgeGroup {
+enum JenisBencana {
+  GEMPA
+  TSUNAMI
+  BANJIR
+  LONGSOR
+  CUACA_EKSTREM
+}
+
+enum TingkatRisiko {
+  RENDAH
+  SEDANG
+  TINGGI
+}
+
+enum KelompokUmur {
   BALITA
   ANAK
   DEWASA
   LANSIA
 }
 
-enum HazardType {
-  BANJIR
-  GEMPA
-  TSUNAMI
-  LONGSOR
-  CUACA_EKSTREM
-}
-
-enum HazardLevel {
-  RENDAH
-  SEDANG
-  TINGGI
-}
-
 model User {
-  id            String      @id @default(uuid()) @db.Uuid
+  id            String     @id @default(uuid())
   nama          String
-  email         String      @unique
+  email         String     @unique
   password_hash String
-  role          Role        @default(USER)
-  households    Household[]
-
-  @@map("users")
+  role          Role       @default(USER)
+  created_at    DateTime   @default(now())
+  household     Household?
 }
 
 model Region {
   id              Int             @id @default(autoincrement())
-  kode_wilayah    String          @unique
+  kode_wilayah    String
   kecamatan       String
   kab_kota        String
-  households      Household[]
   hazard_zones    HazardZone[]
   assembly_points AssemblyPoint[]
+  households      Household[]
+}
 
-  @@map("regions")
+model HazardZone {
+  id            Int           @id @default(autoincrement())
+  region_id     Int
+  jenis_bencana JenisBencana
+  tingkat       TingkatRisiko
+  sumber        String
+  region        Region        @relation(fields: [region_id], references: [id], onDelete: Cascade)
+}
+
+model AssemblyPoint {
+  id        Int    @id @default(autoincrement())
+  region_id Int
+  nama      String
+  lat       Float
+  lng       Float
+  region    Region @relation(fields: [region_id], references: [id], onDelete: Cascade)
 }
 
 model Household {
-  id          String          @id @default(uuid()) @db.Uuid
-  user_id     String          @db.Uuid
-  region_id   Int?
-  lat         Decimal?        @db.Decimal(9, 6)
-  lng         Decimal?        @db.Decimal(9, 6)
-  share_token String?         @unique
-  user        User            @relation(fields: [user_id], references: [id])
-  region      Region?         @relation(fields: [region_id], references: [id])
-  members     Member[]
-  plans       EmergencyPlan[]
-  kit_items   KitItem[]
-  drills      Drill[]
-
-  @@map("households")
+  id              String          @id @default(uuid())
+  user_id         String          @unique
+  region_id       Int?
+  lat             Float?
+  lng             Float?
+  share_token     String          @unique @default(uuid())
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  region          Region?         @relation(fields: [region_id], references: [id], onDelete: SetNull)
+  members         Member[]
+  emergency_plans EmergencyPlan[]
+  kit_items       KitItem[]
+  drills          Drill[]
 }
 
 model Member {
-  id              String    @id @default(uuid()) @db.Uuid
-  household_id    String    @db.Uuid
-  panggilan       String
-  kelompok_umur   AgeGroup
+  id               String       @id @default(uuid())
+  household_id     String
+  panggilan        String
+  kelompok_umur    KelompokUmur
   kebutuhan_khusus String?
-  household       Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
-
-  @@map("members")
+  household        Household    @relation(fields: [household_id], references: [id], onDelete: Cascade)
 }
 
 model EmergencyPlan {
-  id           String    @id @default(uuid()) @db.Uuid
-  household_id String    @db.Uuid
+  id           String    @id @default(uuid())
+  household_id String
   konten       Json
   model_ai     String
   created_at   DateTime  @default(now())
   household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
-
-  @@map("emergency_plans")
 }
 
 model KitItem {
-  id           String    @id @default(uuid()) @db.Uuid
-  household_id String    @db.Uuid
+  id           String    @id @default(uuid())
+  household_id String
   nama_item    String
   status       Boolean   @default(false)
-  kadaluarsa   DateTime? @db.Date
+  kadaluarsa   DateTime?
   household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
-
-  @@map("kit_items")
 }
 
 model Drill {
-  id           String    @id @default(uuid()) @db.Uuid
-  household_id String    @db.Uuid
+  id           String    @id @default(uuid())
+  household_id String
   jadwal       DateTime
   skor         Int?
   household    Household @relation(fields: [household_id], references: [id], onDelete: Cascade)
-
-  @@map("drills")
-}
-
-model HazardZone {
-  id           Int         @id @default(autoincrement())
-  region_id    Int
-  jenis_bencana HazardType
-  tingkat      HazardLevel
-  sumber       String?
-  region       Region      @relation(fields: [region_id], references: [id])
-
-  @@map("hazard_zones")
-}
-
-model AssemblyPoint {
-  id        Int     @id @default(autoincrement())
-  region_id Int
-  nama      String
-  lat       Decimal @db.Decimal(9, 6)
-  lng       Decimal @db.Decimal(9, 6)
-  region    Region  @relation(fields: [region_id], references: [id])
-
-  @@map("assembly_points")
 }
 
 model GuideChunk {
-  id        Int                         @id @default(autoincrement())
+  id        Int                       @id @default(autoincrement())
   sumber    String
-  isi       String
+  isi       String                    @db.Text
   embedding Unsupported("vector(768)")?
-
-  @@map("guide_chunks")
 }
