@@ -18,7 +18,8 @@ Base URL: `${VITE_API_URL}/api`. Semua respons JSON. Auth: header `Authorization
 | POST | /ask | user | Tanya Siaga (RAG) |
 | POST | /share | user | Buat token tautan bagikan |
 | GET | /share/:token | publik | Rencana read-only |
-| CRUD | /admin/guides, /admin/hazards, /admin/points | admin | Kelola data |
+| GET, POST, PUT, DELETE | /admin/guides, /admin/hazard-zones, /admin/assembly-points | admin | Kelola panduan, zona bahaya, titik kumpul (`:id` untuk PUT/DELETE) |
+| POST | /admin/reindex-guides | admin | Bangun ulang embedding vektor panduan (RAG) |
 
 ## Contoh respons GET /risk
 ```json

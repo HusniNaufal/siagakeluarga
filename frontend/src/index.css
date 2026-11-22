@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Onest', 'Geist Variable', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Onest', 'Geist Mono Variable', ui-monospace, monospace;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Token desain SiagaKeluarga (sesuai design/siagakeluarga.fig — Palet Navy + Oranye Siaga & 5 Warna Bencana) */
+@theme {
+    --color-ink: #0f172a;
+    --color-ink-2: #475569;
+    --color-ink-3: #64748b;
+    --color-base: #ffffff;
+    --color-surface: #f5f5f4;
+    --color-line: #e2e8f0;
+    --color-warm: #f4f1ea;
+    --color-warm-2: #e8e2d4;
+    --color-night: #0b2545;
+    --color-navy: #0b2545;
+    --color-navy-2: #13345d;
+    --color-navy-3: #173b68;
+    --color-storm: #0f2d52;
+    --color-storm-2: #13345d;
+    --color-mist: #94a3b8;
+    --color-accent-dark: #c2410c;
+    --color-accent-hover: #9a3412;
+    --color-accent-light: #fb923c;
+    --color-accent-soft: #fff7ed;
+    --color-aman: #16a34a;
+    --color-waspada: #d97706;
+    --color-bahaya: #dc2626;
+    --color-data-blue: #3b82f6;
+    /* 5 Warna Bencana resmi dari siagakeluarga.fig */
+    --color-banjir: #1d4ed8;
+    --color-banjir-soft: #eff6ff;
+    --color-gempa: #b91c1c;
+    --color-gempa-soft: #fef2f2;
+    --color-longsor: #a16207;
+    --color-longsor-soft: #fefce8;
+    --color-cuaca: #0f766e;
+    --color-cuaca-soft: #f0fdfa;
+    --color-tsunami: #0e7490;
+    --color-tsunami-soft: #ecfeff;
+}
+
+:root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #c2410c;
+    --primary-foreground: #ffffff;
+    --secondary: #f4f1ea;
+    --secondary-foreground: #0f172a;
+    --muted: #f5f5f4;
+    --muted-foreground: #64748b;
+    --accent: #f4f1ea;
+    --accent-foreground: #c2410c;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #c2410c;
+    --chart-1: #c2410c;
+    --chart-2: #1d4ed8;
+    --chart-3: #16a34a;
+    --chart-4: #d97706;
+    --chart-5: #64748b;
+    --radius: 1rem;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #c2410c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #f4f1ea;
+    --sidebar-accent-foreground: #c2410c;
+    --sidebar-border: #e2e8f0;
+    --sidebar-ring: #c2410c;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased scroll-smooth;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground selection:bg-accent-soft selection:text-accent-dark;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
