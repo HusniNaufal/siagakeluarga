@@ -6,7 +6,6 @@ import {
   useMotionValueEvent,
   useScroll,
   useTransform,
-  type MotionValue,
 } from "motion/react";
 import { HeroFrames } from "@/components/sections/HeroFrames";
 
@@ -31,28 +30,22 @@ const N = CHAPTERS.length;
  */
 function ChapterLayer({
   chapter,
-  index,
-  scrollYProgress,
+  isActive,
 }: {
   chapter: (typeof CHAPTERS)[number];
-  index: number;
-  scrollYProgress: MotionValue<number>;
+  isActive: boolean;
 }) {
-  const start = index / N;
-  const end = (index + 1) / N;
-  const mid = (start + end) / 2;
-  const opacity = useTransform(
-    scrollYProgress,
-    [start, start + 0.03, mid, end - 0.03, end],
-    [0, 1, 1, 1, 0],
-  );
+  if (!isActive) return null;
 
   // Babak Hujan: rintik hujan lembut
   if (chapter.key === "hujan") {
     return (
       <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4 }}
         className="pointer-events-none absolute inset-0 z-10 overflow-hidden bg-night/35"
-        style={{ opacity }}
       >
         <svg
           viewBox="0 0 1440 900"
@@ -85,23 +78,26 @@ function ChapterLayer({
   if (chapter.key === "badai") {
     return (
       <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
         className="pointer-events-none absolute inset-0 z-10 overflow-hidden bg-night/70"
-        style={{ opacity }}
       >
         {/* Glow langit saat badai */}
         <div
           className="pointer-events-none absolute top-[-50px] left-1/2 h-[750px] w-[950px] -translate-x-1/2 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(147, 197, 253, 0.38) 0%, rgba(59, 130, 246, 0.15) 50%, transparent 70%)",
+              "radial-gradient(circle, rgba(147, 197, 253, 0.45) 0%, rgba(59, 130, 246, 0.2) 50%, transparent 70%)",
           }}
         />
 
         {/* Cahaya Layar Berkedip (Screen Lightning Flash) */}
         <motion.div
-          className="pointer-events-none absolute inset-0 bg-white/25"
-          animate={{ opacity: [0, 0.45, 0.08, 0.6, 0.05, 0, 0, 0.3, 0] }}
-          transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 0.8 }}
+          className="pointer-events-none absolute inset-0 bg-white/30"
+          animate={{ opacity: [0, 0.5, 0.08, 0.7, 0.05, 0, 0, 0.35, 0] }}
+          transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 0.5 }}
         />
 
         <svg
@@ -114,46 +110,46 @@ function ChapterLayer({
             d="M 748 40 L 730 142 L 758 148 L 732 260 L 760 268 L 720 390 L 738 395 L 710 490"
             fill="none"
             stroke="#FFFFFF"
-            strokeWidth="3.5"
+            strokeWidth="3.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter="drop-shadow(0 0 12px #38bdf8) drop-shadow(0 0 25px #0284c7)"
-            animate={{ opacity: [0.9, 1, 0.4, 1, 0.85, 0.3, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            filter="drop-shadow(0 0 14px #38bdf8) drop-shadow(0 0 30px #0284c7)"
+            animate={{ opacity: [0.95, 1, 0.4, 1, 0.85, 0.3, 1] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
           />
           {/* Cabang Kilat 1 */}
           <motion.path
             d="M 732 260 L 700 310 L 712 318 L 685 370"
             fill="none"
             stroke="#BAE6FD"
-            strokeWidth="2.2"
+            strokeWidth="2.5"
             strokeLinecap="round"
-            filter="drop-shadow(0 0 8px #38bdf8)"
-            animate={{ opacity: [0.8, 1, 0.2, 0.9, 0.3, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.1 }}
+            filter="drop-shadow(0 0 10px #38bdf8)"
+            animate={{ opacity: [0.85, 1, 0.2, 0.9, 0.3, 1] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.08 }}
           />
           {/* Kilat Samping Kanan */}
           <motion.path
             d="M 988 30 L 974 114 L 996 120 L 972 220 L 990 228 L 968 320"
             fill="none"
             stroke="#BAE6FD"
-            strokeWidth="2.5"
+            strokeWidth="2.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter="drop-shadow(0 0 10px #38bdf8)"
-            animate={{ opacity: [0.75, 1, 0.3, 0.85, 0.2, 0.9] }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+            filter="drop-shadow(0 0 12px #38bdf8)"
+            animate={{ opacity: [0.8, 1, 0.3, 0.9, 0.2, 0.95] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
           />
           {/* Kilat Samping Kiri */}
           <motion.path
             d="M 410 60 L 430 135 L 412 142 L 428 220"
             fill="none"
             stroke="#E0F2FE"
-            strokeWidth="2"
+            strokeWidth="2.2"
             strokeLinecap="round"
-            filter="drop-shadow(0 0 8px #7dd3fc)"
-            animate={{ opacity: [0.6, 0.9, 0.1, 0.8, 0.2, 0.85] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+            filter="drop-shadow(0 0 10px #7dd3fc)"
+            animate={{ opacity: [0.7, 0.95, 0.15, 0.85, 0.25, 0.9] }}
+            transition={{ duration: 2.0, repeat: Infinity, ease: "easeInOut", delay: 0.25 }}
           />
         </svg>
       </motion.div>
@@ -302,8 +298,7 @@ export function Hero() {
           <ChapterLayer
             key={item.key}
             chapter={item}
-            index={i}
-            scrollYProgress={scrollYProgress}
+            isActive={chapterIndex === i}
           />
         ))}
 
@@ -326,7 +321,7 @@ export function Hero() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 mx-auto flex max-w-[1240px] items-end justify-between gap-4 px-5 pb-6 md:px-8 md:pb-8">
 
           {/* Relrail babak: lima segmen, yang aktif diberi panjang dan warna. */}
-          <ol className="ml-auto flex items-center gap-2" aria-label="Babak cerita">
+          <ol className="pointer-events-auto ml-auto flex items-center gap-2" aria-label="Babak cerita">
             {CHAPTERS.map((item, i) => (
               <li key={item.key}>
                 <button
@@ -338,7 +333,7 @@ export function Hero() {
                     window.scrollTo({ top, behavior: "smooth" });
                   }}
                   aria-current={i === chapterIndex}
-                  className="group flex h-8 items-center"
+                  className="group flex h-8 items-center cursor-pointer"
                 >
                   <span
                     className={
