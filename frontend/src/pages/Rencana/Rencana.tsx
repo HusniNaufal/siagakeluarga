@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Phone } from "lucide-react";
+import {
+  Phone,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  Sparkles,
+  ShieldAlert,
+  Info,
+} from "lucide-react";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useRisk } from "@/hooks/useRisk";
 import { useGeneratePlan } from "@/hooks/usePlan";
@@ -14,14 +22,6 @@ import { cn } from "@/lib/utils";
 import type { JenisBencana } from "@/lib/types";
 
 const FASES: Fase[] = ["sebelum", "saat", "sesudah"];
-
-const BATANG: Record<JenisBencana, string> = {
-  BANJIR: "bg-banjir",
-  GEMPA: "bg-gempa",
-  LONGSOR: "bg-longsor",
-  CUACA_EKSTREM: "bg-cuaca",
-  TSUNAMI: "bg-tsunami",
-};
 
 const DASAR: JenisBencana[] = ["BANJIR", "GEMPA", "LONGSOR", "CUACA_EKSTREM"];
 
@@ -39,13 +39,69 @@ function jarakLabel(km: number | null | undefined) {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
-function NumberedList({ items }: { items: string[] }) {
+const FASE_METAS: Record<
+  Fase,
+  {
+    label: string;
+    badge: string;
+    badgeCls: string;
+    accentCls: string;
+    icon: typeof Clock;
+  }
+> = {
+  sebelum: {
+    label: "Sebelum",
+    badge: "Pra-Bencana",
+    badgeCls: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    accentCls: "bg-amber-500",
+    icon: Clock,
+  },
+  saat: {
+    label: "Saat Kejadian",
+    badge: "Evakuasi & Tanggap",
+    badgeCls: "bg-bahaya/10 text-bahaya border-bahaya/20",
+    accentCls: "bg-bahaya",
+    icon: AlertTriangle,
+  },
+  sesudah: {
+    label: "Sesudah",
+    badge: "Pemulihan & Aman",
+    badgeCls: "bg-aman/10 text-aman border-aman/20",
+    accentCls: "bg-aman",
+    icon: CheckCircle2,
+  },
+};
+
+function NumberedList({
+  items,
+  variant = "default",
+}: {
+  items: string[];
+  variant?: "default" | "ai";
+}) {
   return (
-    <ol className="space-y-3">
+    <ol className="space-y-2.5">
       {items.map((l, i) => (
-        <li key={`${i}-${l}`} className="flex items-start gap-3 text-[15px] leading-[1.55] text-ink-3">
-          <span className="font-display w-6 shrink-0 text-[17px] leading-[1.4] font-semibold text-ink">{i + 1}</span>
-          <span>{l}</span>
+        <li
+          key={`${i}-${l}`}
+          className={cn(
+            "flex items-start gap-3 rounded-2xl p-3.5 text-[14px] leading-[1.6] transition-all",
+            variant === "ai"
+              ? "bg-accent-dark/5 text-ink border border-accent-dark/20 shadow-2xs"
+              : "bg-surface/80 text-ink-2 hover:bg-surface border border-line/60"
+          )}
+        >
+          <span
+            className={cn(
+              "flex size-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold shadow-2xs mt-0.5",
+              variant === "ai"
+                ? "bg-accent-dark text-white"
+                : "bg-base text-ink border border-line"
+            )}
+          >
+            {i + 1}
+          </span>
+          <span className="min-w-0 flex-1">{l}</span>
         </li>
       ))}
     </ol>
@@ -178,20 +234,80 @@ export function Rencana() {
         </div>
       )}
 
-      <div className="grid gap-10 print:hidden lg:grid-cols-[1fr_280px]">
-        <div className="min-w-0 space-y-10">
-          <section id="ringkasan" className="rounded-2xl border border-line bg-base p-6">
-            <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Ringkasan risiko</h2>
-            <p className="mt-2 text-[16px] leading-[1.6] text-ink-3">
-              {konten?.ringkasan_risiko ??
-                (wilayahTeks
-                  ? `Wilayah rumahmu: ${wilayahTeks}. Ringkasan risiko muncul setelah rencana disusun.`
-                  : "Wilayah rumah belum diisi. Lengkapi lokasi agar risiko bisa dihitung.")}
-            </p>
+      <div className="space-y-8 print:hidden">
+        {/* Baris 1: Ringkasan risiko & Cuaca BMKG berdampingan secara proporsional */}
+        <div className="grid gap-6 md:grid-cols-3">
+          <section id="ringkasan" className="flex flex-col justify-between rounded-3xl border border-line/80 bg-base p-6 shadow-sm md:col-span-2">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center rounded-full bg-accent-dark/10 text-accent-dark">
+                  <ShieldAlert className="size-4" />
+                </span>
+                <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Ringkasan risiko</h2>
+              </div>
+              <p className="mt-3 text-[15px] leading-[1.65] text-ink-3">
+                {konten?.ringkasan_risiko ??
+                  (wilayahTeks
+                    ? `Wilayah rumahmu: ${wilayahTeks}. Ringkasan risiko muncul setelah rencana disusun.`
+                    : "Wilayah rumah belum diisi. Lengkapi lokasi agar risiko bisa dihitung.")}
+              </p>
+            </div>
+            {household.region?.hazard_zones?.length ? (
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line/60 pt-3">
+                <span className="text-[12px] font-medium text-muted">Potensi ancaman di wilayah ini:</span>
+                {household.region.hazard_zones.map((z) => (
+                  <span
+                    key={z.id}
+                    className="rounded-full border border-line bg-surface px-2.5 py-0.5 text-[12px] font-semibold text-ink"
+                  >
+                    {z.jenis_bencana.replace("_", " ")} ({z.tingkat.toLowerCase()})
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </section>
 
-          <section id="panduan" className="space-y-5">
-            <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Langkah per skenario</h2>
+          <section className="flex flex-col justify-between rounded-3xl border border-line/80 bg-base p-6 shadow-sm">
+            <div>
+              <div className="flex items-center justify-between">
+                <p className="text-[15px] font-semibold text-ink">Cuaca BMKG</p>
+                <span className="rounded-full bg-tint px-2.5 py-0.5 text-[11px] font-semibold text-ink">Live</span>
+              </div>
+              {cuaca?.tersedia ? (
+                <div className="mt-3">
+                  <p className="font-display text-[32px] font-bold text-ink leading-none">
+                    {Math.round(cuaca.saat_ini.suhu_c)}°C
+                  </p>
+                  <p className="mt-1 text-[15px] font-medium text-ink-2">{cuaca.saat_ini.cuaca}</p>
+                  <p className="mt-1 text-[12px] text-muted">
+                    {cuaca.lokasi ? `${cuaca.lokasi.desa}, ${cuaca.lokasi.kecamatan}` : wilayahTeks}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-3 text-[14px] text-ink-3">
+                  {cuaca ? "Prakiraan BMKG belum bisa dimuat." : "Memuat cuaca…"}
+                </p>
+              )}
+            </div>
+            <a
+              href="tel:112"
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white shadow-xs transition-colors hover:bg-accent-hover cursor-pointer"
+            >
+              <Phone className="size-4" />
+              <span>Hubungi darurat 112</span>
+            </a>
+          </section>
+        </div>
+
+        {/* Baris 2: Langkah per skenario (Full Width 3 Kolom Megah & Luas) */}
+        <section id="panduan" className="space-y-6 rounded-3xl border border-line/80 bg-base/60 p-6 shadow-xs backdrop-blur-sm md:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-[22px] font-bold tracking-[-0.015em] text-ink">Langkah per skenario</h2>
+              <p className="mt-1 text-[14px] text-ink-3">
+                Panduan praktis sebelum, saat, dan sesudah bencana untuk melindungi seluruh anggota keluarga.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Jenis bencana">
               {skenario.map((s) => {
                 const active = guide.jenis === s.jenis;
@@ -203,10 +319,10 @@ export function Rencana() {
                     aria-selected={active}
                     onClick={() => setActiveJenis(s.jenis)}
                     className={cn(
-                      "h-11 rounded-full px-5 text-[15px] transition-colors",
+                      "h-10 rounded-full px-4 text-[14px] font-medium transition-all cursor-pointer",
                       active
-                        ? "bg-ink font-semibold text-white"
-                        : "border border-line bg-base font-medium text-ink-3 hover:bg-tint",
+                        ? "bg-ink font-semibold text-white shadow-xs"
+                        : "border border-line bg-base text-ink-3 hover:bg-tint hover:text-ink",
                     )}
                   >
                     {s.label}
@@ -214,79 +330,113 @@ export function Rencana() {
                 );
               })}
             </div>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-3" role="tabpanel" aria-label={`Langkah ${guide.label}`}>
-              {FASES.map((f) => {
-                const fase = guide.fase[f];
-                const dariAi = f === "sebelum" ? aiSebelum : f === "saat" ? aiSaat : [];
-                return (
-                  <div key={f} className="flex flex-col rounded-2xl border border-line bg-base p-5">
-                    <span className={cn("mb-3 block h-1 w-10 rounded-full", BATANG[guide.jenis])} aria-hidden="true" />
-                    <h3 className="text-[18px] font-semibold tracking-[-0.01em] text-ink">{FASE_LABEL[f]}</h3>
-                    <p className="mt-1 mb-4 text-[14px] leading-[1.5] text-muted">{fase.ringkasan}</p>
-                    <NumberedList items={fase.langkah} />
-                    {dariAi.length > 0 && (
-                      <div className="mt-5 border-t border-line pt-4">
-                        <p className="mb-3 text-[14px] font-semibold text-ink">Tambahan untuk keluargamu</p>
-                        <NumberedList items={dariAi} />
+          <div className="grid gap-5 md:grid-cols-3" role="tabpanel" aria-label={`Langkah ${guide.label}`}>
+            {FASES.map((f) => {
+              const fase = guide.fase[f];
+              const meta = FASE_METAS[f];
+              const Icon = meta.icon;
+              const dariAi = f === "sebelum" ? aiSebelum : f === "saat" ? aiSaat : [];
+              return (
+                <div
+                  key={f}
+                  className="flex flex-col justify-between overflow-hidden rounded-3xl border border-line/80 bg-base p-5 shadow-xs transition-shadow hover:shadow-md"
+                >
+                  <div>
+                    {/* Header Fase */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={cn("flex size-7 items-center justify-center rounded-lg text-white", meta.accentCls)}>
+                          <Icon className="size-4" />
+                        </span>
+                        <h3 className="text-[17px] font-bold tracking-[-0.01em] text-ink">{meta.label}</h3>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-[14px] leading-[1.55] text-muted">
-              Langkah umum dari panduan resmi. Tambahan untuk keluargamu berlaku untuk semua skenario.
-            </p>
-          </section>
+                      <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold border", meta.badgeCls)}>
+                        {meta.badge}
+                      </span>
+                    </div>
 
-          <section id="titik-kumpul" className="rounded-2xl border border-line bg-base p-6">
-            <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Titik kumpul</h2>
-            {titik ? (
-              <>
-                <p className="font-display mt-3 text-[24px] leading-tight font-semibold tracking-[-0.02em] text-ink">{titik.nama}</p>
-                <p className="mt-2 text-[16px] leading-[1.6] text-ink-3">
-                  {jarakLabel(titik.jarak_km) ? `${jarakLabel(titik.jarak_km)} dari rumah. ` : ""}
-                  {konten?.rute_dan_titik_kumpul ?? ""}
+                    <p className="mt-2.5 mb-4 text-[13px] leading-[1.55] text-ink-3">
+                      {fase.ringkasan}
+                    </p>
+
+                    {/* Daftar Langkah Standar */}
+                    <NumberedList items={fase.langkah} />
+                  </div>
+
+                  {/* Tambahan Personalisasi AI */}
+                  {dariAi.length > 0 && (
+                    <div className="mt-5 border-t border-line/80 pt-4">
+                      <div className="mb-2.5 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-accent-dark">
+                        <Sparkles className="size-3.5" />
+                        <span>Tambahan Khusus AI Keluargamu</span>
+                      </div>
+                      <NumberedList items={dariAi} variant="ai" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="flex items-center gap-1.5 pt-1 text-[13px] text-muted">
+            <Info className="size-3.5 shrink-0" />
+            Langkah umum berpedoman pada standar BNPB. Rekomendasi tambahan AI disesuaikan dengan profil dan usia keluargamu.
+          </p>
+        </section>
+
+        {/* Baris 3: Titik kumpul & Tugas anggota */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <section id="titik-kumpul" className="rounded-3xl border border-line/80 bg-base p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Titik kumpul</h2>
+              {titik ? (
+                <>
+                  <p className="font-display mt-3 text-[22px] leading-tight font-semibold tracking-[-0.02em] text-ink">{titik.nama}</p>
+                  <p className="mt-2 text-[15px] leading-[1.6] text-ink-3">
+                    {jarakLabel(titik.jarak_km) ? `${jarakLabel(titik.jarak_km)} dari rumah. ` : ""}
+                    {konten?.rute_dan_titik_kumpul ?? ""}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-[15px] leading-[1.6] text-ink-3">
+                  Belum ada titik kumpul untuk wilayah ini. Tanyakan ke RT/RW atau BPBD setempat, lalu catat di rencana.
                 </p>
-                {petaHref && (
-                  <a
-                    href={petaHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 inline-flex h-11 items-center rounded-full border border-line bg-base px-5 text-[15px] font-semibold text-ink hover:bg-tint"
-                  >
-                    Buka di peta
-                  </a>
-                )}
-              </>
-            ) : (
-              <p className="mt-2 text-[16px] leading-[1.6] text-ink-3">
-                Belum ada titik kumpul untuk wilayah ini. Tanyakan ke RT/RW atau BPBD setempat, lalu catat di rencana.
-              </p>
+              )}
+            </div>
+            {titik && petaHref && (
+              <a
+                href={petaHref}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex h-11 w-fit items-center rounded-full border border-line bg-base px-5 text-[14px] font-semibold text-ink hover:bg-tint"
+              >
+                Buka di peta
+              </a>
             )}
           </section>
 
-          <section id="tugas" className="space-y-4">
+          <section id="tugas" className="space-y-4 rounded-3xl border border-line/80 bg-base p-6 shadow-sm">
             <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Tugas tiap anggota</h2>
             {tugas.length === 0 ? (
-              <p className="rounded-2xl border border-line bg-base p-5 text-[15px] text-ink-3">
+              <p className="rounded-2xl border border-line bg-surface/60 p-4 text-[14px] text-ink-3">
                 Tugas dibuat saat rencana disusun.
               </p>
             ) : (
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul className="grid gap-3">
                 {tugas.map((t, i) => {
                   const name = t.anggota ?? `Anggota ${i + 1}`;
                   return (
-                    <li key={i} className="flex items-start gap-4 rounded-2xl border border-line bg-base p-5">
-                      <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-[15px] font-semibold text-ink">
+                    <li key={i} className="flex items-start gap-3 rounded-2xl border border-line/60 bg-surface/70 p-4">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-base text-[13px] font-semibold text-ink shadow-2xs">
                         {getInitials(name)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[17px] font-semibold text-ink">{name}</p>
-                        <p className="mt-1 text-[15px] leading-[1.55] text-ink-3">{t.tugas ?? t.peran}</p>
+                        <p className="text-[15px] font-semibold text-ink">{name}</p>
+                        <p className="mt-0.5 text-[14px] leading-[1.5] text-ink-3">{t.tugas ?? t.peran}</p>
                         {t.fokus_pendampingan && (
-                          <p className="mt-1 text-[14px] leading-[1.5] text-muted">{t.fokus_pendampingan}</p>
+                          <p className="mt-1 text-[13px] text-muted">{t.fokus_pendampingan}</p>
                         )}
                       </div>
                     </li>
@@ -295,92 +445,68 @@ export function Rencana() {
               </ul>
             )}
           </section>
+        </div>
 
-          <section id="kontak" className="space-y-4">
+        {/* Baris 4: Kontak darurat & Catatan khusus */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <section id="kontak" className="space-y-4 rounded-3xl border border-line/80 bg-base p-6 shadow-sm">
             <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Kontak darurat</h2>
             <ul className="grid gap-3 sm:grid-cols-2">
               {kontakDaftar.map((k) => (
                 <li
                   key={`${k.nama}-${k.nomor}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-base p-5"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-line/60 bg-surface/70 p-4"
                 >
                   <div className="min-w-0">
-                    <p className="text-[16px] font-semibold text-ink">{k.nama}</p>
-                    <p className="mt-0.5 text-[15px] text-ink-3">
+                    <p className="text-[15px] font-semibold text-ink truncate">{k.nama}</p>
+                    <p className="mt-0.5 text-[14px] text-ink-3">
                       <span className="font-display font-semibold tracking-[-0.01em] text-ink">{k.nomor}</span>
-                      <span className="text-[14px] text-muted"> · {k.ket}</span>
+                      <span className="text-[13px] text-muted"> · {k.ket}</span>
                     </p>
                   </div>
                   <a
                     href={telHref(k.nomor)}
                     aria-label={`Telepon ${k.nama} ${k.nomor}`}
-                    className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent-dark text-white hover:bg-accent-hover"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-dark text-white hover:bg-accent-hover"
                   >
-                    <Phone className="size-5" strokeWidth={1.75} aria-hidden="true" />
+                    <Phone className="size-4" strokeWidth={1.75} aria-hidden="true" />
                   </a>
                 </li>
               ))}
             </ul>
             {kontakAi.length > 0 && (
-              <p className="text-[14px] leading-[1.6] text-muted">Dari rencana AI: {kontakAi.join(", ")}.</p>
+              <p className="text-[13px] leading-[1.5] text-muted">Dari rencana AI: {kontakAi.join(", ")}.</p>
             )}
             {kontak.length === 0 && (
-              <p className="text-[14px] leading-[1.6] text-muted">
+              <p className="text-[13px] leading-[1.5] text-muted">
                 Tambahkan nomor RT, puskesmas, dan BPBD setempat di halaman Keluarga. Nomor lokal berbeda tiap daerah,
                 jadi tidak diisi otomatis.
               </p>
             )}
           </section>
 
-          <section id="catatan" className="space-y-4">
+          <section id="catatan" className="space-y-4 rounded-3xl border border-line/80 bg-base p-6 shadow-sm">
             <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Catatan khusus</h2>
             {catatan.length === 0 ? (
-              <p className="rounded-2xl border border-line bg-base p-5 text-[15px] leading-[1.6] text-ink-3">
+              <p className="rounded-2xl border border-line/60 bg-surface/60 p-4 text-[14px] leading-[1.6] text-ink-3">
                 Belum ada kebutuhan khusus. Isi di profil anggota yang membutuhkan obat rutin atau bantuan berjalan.
               </p>
             ) : (
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul className="grid gap-3">
                 {catatan.map((m) => (
-                  <li key={m.id} className="rounded-2xl border border-line bg-base p-5">
-                    <p className="text-[17px] font-semibold text-ink">Kebutuhan {m.panggilan}</p>
-                    <p className="mt-1.5 text-[15px] leading-[1.55] text-ink-3">{m.kebutuhan_khusus}</p>
+                  <li key={m.id} className="rounded-2xl border border-line/60 bg-surface/70 p-4">
+                    <p className="text-[15px] font-semibold text-ink">Kebutuhan {m.panggilan}</p>
+                    <p className="mt-1 text-[14px] leading-[1.5] text-ink-3">{m.kebutuhan_khusus}</p>
                   </li>
                 ))}
               </ul>
             )}
           </section>
-
-          <p className="rounded-2xl bg-surface p-5 text-[15px] leading-[1.6] text-ink">
-            Instruksi resmi petugas dan BPBD tetap menjadi acuan utama.
-          </p>
         </div>
 
-        <aside className="h-fit space-y-5 lg:sticky lg:top-6">
-          <div className="rounded-2xl border border-line bg-base p-5">
-            <p className="text-[16px] font-semibold text-ink">Cuaca saat ini</p>
-            {cuaca?.tersedia ? (
-              <>
-                <p className="font-display mt-2 text-[28px] leading-none font-semibold tracking-[-0.03em] text-ink">
-                  {cuaca.saat_ini.suhu_c}°C
-                </p>
-                <p className="mt-1.5 text-[15px] text-ink-3">{cuaca.saat_ini.cuaca}</p>
-                <p className="mt-1.5 text-[13px] leading-[1.4] text-muted">
-                  {cuaca.lokasi ? `${cuaca.lokasi.desa}, ${cuaca.lokasi.kecamatan}` : wilayahTeks} · Sumber: BMKG
-                </p>
-              </>
-            ) : (
-              <p className="mt-2 text-[15px] leading-[1.5] text-ink-3">
-                {cuaca ? "Prakiraan BMKG belum bisa dimuat." : "Memuat cuaca…"}
-              </p>
-            )}
-            <a
-              href="tel:112"
-              className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-accent-dark text-[15px] font-semibold text-white hover:bg-accent-hover"
-            >
-              Hubungi darurat 112
-            </a>
-          </div>
-        </aside>
+        <p className="rounded-2xl bg-surface/80 p-4 text-center text-[14px] text-ink-3">
+          Instruksi resmi petugas dan BPBD setempat tetap menjadi acuan keselamatan utama.
+        </p>
       </div>
 
       {/* Lembar cetak ringkas: hanya tampil saat dicetak. */}

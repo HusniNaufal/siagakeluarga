@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import {
   X,
@@ -83,17 +84,19 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   const wilayah = household?.region
     ? `Kec. ${household.region.kecamatan}, ${household.region.kab_kota}`
-    : "Lokasi belum diatur";
+    : household?.lat != null
+      ? "Lokasi tersimpan di peta"
+      : "Lokasi belum diatur";
 
   const jumlahAnggota = household?.members?.length ?? 0;
   const pctTas = household?.kesiapan_tas?.persentase ?? 0;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="judul-profil"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-night/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-night/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -270,6 +273,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
