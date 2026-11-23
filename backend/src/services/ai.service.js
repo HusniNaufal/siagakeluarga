@@ -157,7 +157,7 @@ export const describeHousehold = (h, { detailed = true } = {}) => {
 
 // ---------- Generasi ----------
 // Model utama lalu cadangan jika model sedang overload (503) / kena limit (429)
-const MODEL_CHAIN = [...new Set([CHAT_MODEL, 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'])];
+const MODEL_CHAIN = [...new Set([CHAT_MODEL, 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.7-flash'])];
 
 const generateWithFallback = async (contents, config) => {
   let last;
