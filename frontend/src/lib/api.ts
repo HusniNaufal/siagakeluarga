@@ -2,8 +2,12 @@
 // { success, message, data? } (sukses) atau { success:false, message, errors? } (gagal)
 // — lihat backend/src/middlewares/errorHandler.js & validate.js.
 
-const rawUrl = ((import.meta.env.VITE_API_URL as string | undefined)?.trim().replace(/\/+$/, "")) || "http://localhost:3000";
-const BASE_URL = rawUrl.endsWith("/api") ? rawUrl : `${rawUrl}/api`;
+const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+// Menggunakan relative path '/api' agar otomatis diteruskan oleh proxy (Vite di lokal, Vercel Rewrite di produksi)
+// sehingga browser bebas dari kendala CORS (No Access-Control-Allow-Origin).
+const BASE_URL = !envUrl || envUrl === "/api" || envUrl === "https://siagakeluarga.vercel.app"
+  ? "/api"
+  : (envUrl.endsWith("/api") ? envUrl : `${envUrl}/api`);
 const TOKEN_KEY = "siagakeluarga.token";
 
 export function getToken(): string | null {

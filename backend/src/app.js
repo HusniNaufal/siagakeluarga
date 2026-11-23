@@ -26,12 +26,8 @@ if (isProd && allowed.length === 0) {
 }
 app.use(
   cors({
-    origin(origin, cb) {
-      if (!origin) return cb(null, true); // curl, server-ke-server, health check
-      if (allowed.includes(origin)) return cb(null, true);
-      if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
-      return cb(null, false);
-    },
+    origin: true,
+    credentials: true,
   }),
 );
 
