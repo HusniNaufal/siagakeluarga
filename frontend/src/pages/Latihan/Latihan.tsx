@@ -4,6 +4,8 @@ import { Activity, Check, CloudLightning, Mountain, Waves, X } from "lucide-reac
 import { useGenerateQuiz } from "@/hooks/useQuiz";
 import { useCreateDrill, useDrills } from "@/hooks/useDrills";
 import { cn } from "@/lib/utils";
+import { CalendarClock } from "lucide-react";
+import { AppHero } from "@/components/app/AppHero";
 import type { JenisBencana, QuizShape } from "@/lib/types";
 
 const SKENARIO: { jenis: JenisBencana; label: string; deskripsi: string; icon: typeof Waves }[] = [
@@ -147,6 +149,7 @@ export function Latihan() {
   const [pesan, setPesan] = useState<string | null>(null);
   const generateQuiz = useGenerateQuiz();
   const createDrill = useCreateDrill();
+  const [tanggalJadwal, setTanggalJadwal] = useState("");
   const { data: drillsData } = useDrills();
 
   async function mulai(jenis: JenisBencana) {
@@ -363,12 +366,12 @@ export function Latihan() {
 
   return (
     <div className="space-y-10">
-      <div>
+      <AppHero variasi="rumah">
         <h1>Latihan</h1>
         <p className="mt-1 max-w-[56ch] text-[16px] text-ink-3">
           Pilih satu skenario. Setiap latihan berisi beberapa pertanyaan singkat tentang langkah pertama yang tepat.
         </p>
-      </div>
+      </AppHero>
 
       <ul className="grid gap-3 sm:grid-cols-2">
         {SKENARIO.map((s) => {
@@ -404,13 +407,83 @@ export function Latihan() {
             ["Latihan dicoba", drills.length],
             ["Rata-rata skor", drillsData?.rata_rata_skor != null ? Math.round(drillsData.rata_rata_skor) : "–"],
             ["Minggu ini", mingguIni],
-          ].map(([label, nilai]) => (
-            <div key={label} className="rounded-2xl border border-line bg-base p-5">
-              <dt className="text-[14px] text-muted">{label}</dt>
-              <dd className="font-display mt-1 text-[34px] leading-none font-semibold tracking-[-0.03em] text-ink">{nilai}</dd>
+          ].map(([label, nilai], i) => (
+            <div
+              key={label}
+              className={cn(
+                "rounded-2xl p-5",
+                i === 0 ? "bg-ink text-white" : i === 1 ? "bg-accent-dark text-white" : "border border-line bg-base",
+              )}
+            >
+              <dd className={cn("font-display text-[40px] leading-none font-semibold tracking-[-0.03em]", i > 1 && "text-ink")}>
+                {nilai}
+              </dd>
+              <dt className={cn("mt-2 text-[15px]", i > 1 ? "text-ink-3" : "text-white/75")}>{label}</dt>
             </div>
           ))}
         </dl>
+      </section>
+
+      <section aria-labelledby="judul-jadwal">
+        <h2 id="judul-jadwal" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+          Jadwal dan riwayat
+        </h2>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!tanggalJadwal) return;
+            await createDrill.mutateAsync({ jadwal: new Date(tanggalJadwal).toISOString() }).catch(() => undefined);
+            setTanggalJadwal("");
+          }}
+          className="mt-4 flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-base p-5"
+        >
+          <div>
+            <label htmlFor="jadwal-latihan" className="block text-[15px] font-medium text-ink">
+              Jadwalkan latihan keluarga
+            </label>
+            <input
+              id="jadwal-latihan"
+              type="datetime-local"
+              value={tanggalJadwal}
+              onChange={(e) => setTanggalJadwal(e.target.value)}
+              className="mt-1.5 h-12 rounded-2xl border border-line bg-base px-4 text-[16px] text-ink outline-none focus:border-ink"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!tanggalJadwal || createDrill.isPending}
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-accent-dark px-6 text-[16px] font-semibold text-white hover:bg-accent-hover disabled:opacity-40"
+          >
+            <CalendarClock className="size-5" aria-hidden="true" />
+            Jadwalkan
+          </button>
+        </form>
+
+        {drills.length === 0 ? (
+          <p className="mt-4 text-[15px] text-ink-3">Belum ada latihan. Pilih skenario di atas atau jadwalkan satu.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-base">
+            {[...drills]
+              .sort((a, b) => new Date(b.jadwal).getTime() - new Date(a.jadwal).getTime())
+              .map((d) => (
+                <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                  <span className="text-[16px] text-ink">
+                    {new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short" }).format(new Date(d.jadwal))}
+                  </span>
+                  {d.skor != null ? (
+                    <span className="font-display text-[22px] font-semibold tracking-[-0.02em] text-ink">
+                      {d.skor}
+                      <span className="ml-1 text-[14px] font-normal text-muted">skor</span>
+                    </span>
+                  ) : (
+                    <span className="text-[15px] text-ink-3">
+                      {new Date(d.jadwal).getTime() > Date.now() ? "Dijadwalkan" : "Belum dinilai"}
+                    </span>
+                  )}
+                </li>
+              ))}
+          </ul>
+        )}
       </section>
     </div>
   );

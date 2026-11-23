@@ -1,9 +1,11 @@
 import bcrypt from 'bcryptjs';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
-// Hash awal untuk demo1234 dan admin1234
-const DEMO_PASSWORD_HASH = bcrypt.hashSync('demo1234', 10);
-const ADMIN_PASSWORD_HASH = bcrypt.hashSync('admin1234', 10);
+// Hanya dipakai saat pengembangan lokal tanpa database (lihat lib/prisma.js).
+// Sandi akun demo dari SEED_DEMO_PASSWORD (bawaan lokal: demo1234). Sandi admin dari SEED_ADMIN_PASSWORD;
+// bila kosong dibuat acak sehingga akun admin tiruan tidak bisa dipakai masuk.
+const DEMO_PASSWORD_HASH = bcrypt.hashSync(process.env.SEED_DEMO_PASSWORD || 'demo1234', 10);
+const ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.SEED_ADMIN_PASSWORD || randomBytes(18).toString('base64url'), 10);
 
 class MockDatabase {
   constructor() {
@@ -140,6 +142,8 @@ class MockDatabase {
       },
     ];
 
+    this.checkIns = [];
+
     this.guides = [
       { id: 1, sumber: 'BNPB Pedoman Kesiapsiagaan Gempa Bumi', isi: 'Saat terjadi gempa bumi, lakukan Drop, Cover, and Hold On (Merunduk, Berlindung di bawah meja kokoh, dan Berpegangan). Jauhi kaca, jendela, dan benda berat yang mudah runtuh.' },
       { id: 2, sumber: 'BMKG Pedoman Evakuasi Mandiri Tsunami', isi: 'Jika merasakan gempa kuat lebih dari 20 detik di daerah pesisir, segera lari menuju tempat yang lebih tinggi (minimal ketinggian 20 meter dpl) dalam waktu kurang dari 20 menit.' },
@@ -254,8 +258,17 @@ class MockDatabase {
         return this._attachHousehold(h, include);
       },
       findFirst: async ({ where, include }) => {
-        const h = this.households.find((x) => !where?.user_id || x.user_id === where.user_id);
+        const h = this.households.find(
+          (x) =>
+            (!where?.user_id || x.user_id === where.user_id) &&
+            (!where?.telegram_kode || x.telegram_kode === where.telegram_kode),
+        );
         return this._attachHousehold(h, include);
+      },
+      findMany: async ({ where, include } = {}) => {
+        return this.households
+          .filter((x) => (where?.telegram_chat_id?.not === null ? x.telegram_chat_id != null : true))
+          .map((h) => this._attachHousehold(h, include));
       },
       create: async ({ data, include }) => {
         const h = {
@@ -277,6 +290,9 @@ class MockDatabase {
         if (data.lat !== undefined) h.lat = data.lat;
         if (data.lng !== undefined) h.lng = data.lng;
         if (data.share_token !== undefined) h.share_token = data.share_token;
+        for (const k of ['telegram_chat_id', 'telegram_kode', 'peringatan_terakhir_at', 'peringatan_terakhir_tingkat']) {
+          if (data[k] !== undefined) h[k] = data[k];
+        }
         return this._attachHousehold(h, include);
       },
     };
@@ -425,6 +441,26 @@ class MockDatabase {
         if (!d) throw new Error('Drill not found');
         Object.assign(d, data);
         return d;
+      },
+    };
+  }
+
+  get checkIn() {
+    return {
+      findMany: async ({ where, orderBy } = {}) => {
+        let rows = this.checkIns.filter((c) => !where?.household_id || c.household_id === where.household_id);
+        if (orderBy?.created_at === 'desc') rows = [...rows].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        return rows;
+      },
+      create: async ({ data }) => {
+        const c = { id: randomUUID(), created_at: new Date().toISOString(), lat: null, lng: null, pesan: null, member_id: null, ...data };
+        this.checkIns.push(c);
+        return c;
+      },
+      deleteMany: async ({ where } = {}) => {
+        const sebelum = this.checkIns.length;
+        this.checkIns = this.checkIns.filter((c) => where?.household_id && c.household_id !== where.household_id);
+        return { count: sebelum - this.checkIns.length };
       },
     };
   }

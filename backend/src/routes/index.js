@@ -9,6 +9,8 @@ import * as cuaca from '../controllers/cuaca.controller.js';
 import * as kit from '../controllers/kit.controller.js';
 import * as drill from '../controllers/drill.controller.js';
 import * as share from '../controllers/share.controller.js';
+import * as kabar from '../controllers/kabar.controller.js';
+import * as peringatan from '../controllers/peringatan.controller.js';
 
 import { aiRouter, adminRouter } from './ai.routes.js';
 
@@ -113,6 +115,30 @@ router.patch('/drills/:id', authenticate, validate({ params: idParam, body: dril
 
 // Public emergency card
 router.get('/share/:token', share.getShareCard);
+
+// Kabar keluarga ("Saya aman"): publik lewat tautan rencana, tanpa login.
+const tokenParam = z.object({ token: z.string().trim().min(8).max(64) });
+const kabarSchema = z
+  .object({
+    member_id: z.string().trim().min(1).max(64).optional(),
+    nama: z.string().trim().min(1).max(40).optional(),
+    status: z.enum(['AMAN', 'BUTUH_BANTUAN']),
+    lat: z.coerce.number().min(-11.5).max(6.5).optional(),
+    lng: z.coerce.number().min(94.5).max(141.5).optional(),
+    pesan: z.string().trim().max(140).optional(),
+  })
+  .refine((v) => (v.lat === undefined) === (v.lng === undefined), { message: 'lat dan lng harus diisi bersama' });
+router.post('/share/:token/checkin', validate({ params: tokenParam, body: kabarSchema }), kabar.kirimKabar);
+router.get('/share/:token/kabar', validate({ params: tokenParam }), kabar.lihatKabarPublik);
+router.get('/kabar', authenticate, kabar.lihatKabarSaya);
+router.delete('/kabar', authenticate, kabar.hapusKabarSaya);
+
+// Pengingat bersiap ke grup keluarga: tombol WhatsApp di aplikasi + Telegram otomatis (opsional).
+router.get('/peringatan', authenticate, peringatan.lihatPeringatan);
+router.post('/peringatan/telegram/kode', authenticate, peringatan.buatKodeTelegram);
+router.delete('/peringatan/telegram', authenticate, peringatan.putuskanTelegram);
+router.post('/telegram/webhook', peringatan.webhookTelegram);
+router.post('/cron/peringatan', peringatan.jalankanPeringatan);
 
 // AI (Gemini + RAG) & admin
 router.use('/ai', aiRouter);

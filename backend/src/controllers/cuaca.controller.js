@@ -1,21 +1,5 @@
-import { getBmkgForecast } from '../services/bmkg.service.js';
+import { forecastFor } from '../services/cuaca.service.js';
 import { resolveAdm4, cariTempat } from '../services/wilayah.service.js';
-
-// Prakiraan BMKG diperbarui tiap 3 jam; cache singkat cukup dan melindungi API publik BMKG.
-const FORECAST_TTL_MS = 15 * 60 * 1000;
-const forecastCache = new Map();
-
-const forecastFor = async (kode) => {
-  const hit = forecastCache.get(kode);
-  if (hit && Date.now() - hit.at < FORECAST_TTL_MS) return hit.value;
-  const value = await getBmkgForecast(kode);
-  // Jangan menyimpan kegagalan, supaya percobaan berikutnya langsung mencoba lagi.
-  if (value.tersedia) {
-    if (forecastCache.size > 300) forecastCache.delete(forecastCache.keys().next().value);
-    forecastCache.set(kode, { value, at: Date.now() });
-  }
-  return value;
-};
 
 // GET /api/cuaca?lat=&lng=  (publik, tanpa login)
 export const getCuaca = async (req, res, next) => {

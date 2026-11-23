@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useAddKitItem, useDeleteKitItem, useKit, useUpdateKitItem } from "@/hooks/useKit";
+import { AppHero } from "@/components/app/AppHero";
+import { EmptyIllustration } from "@/components/ui/EmptyIllustration";
 import { cn } from "@/lib/utils";
 
 /** Saran awal yang umum untuk semua keluarga. Tidak menyebut nama atau kondisi siapa pun. */
@@ -55,33 +57,36 @@ export function TasSiaga() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1>Tas siaga</h1>
-          <p className="mt-1 text-[16px] text-ink-3">
-            {adaItem ? `${siap} dari ${total} barang sudah siap` : "Belum ada barang di daftar"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 print:hidden">
-          {adaItem && (
+      <AppHero
+        variasi="cincin"
+        className="print:hidden"
+        aksi={
+          <>
+            {adaItem && (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="h-11 rounded-full border border-line bg-base px-5 text-[14px] font-semibold text-ink hover:bg-tint"
+              >
+                Cetak daftar
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => window.print()}
-              className="h-10 rounded-full border border-line bg-base px-4 text-[14px] font-semibold text-ink hover:bg-tint"
+              onClick={() => setShowAdd((v) => !v)}
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-accent-dark px-5 text-[14px] font-semibold text-white hover:bg-accent-hover"
             >
-              Cetak daftar
+              <Plus className="size-4" aria-hidden="true" />
+              Tambah barang
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowAdd((v) => !v)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white hover:bg-accent-hover"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Tambah barang
-          </button>
-        </div>
-      </div>
+          </>
+        }
+      >
+        <h1>Tas siaga</h1>
+        <p className="mt-1 max-w-[56ch] text-[16px] text-ink-3">
+          {adaItem ? `${siap} dari ${total} barang sudah siap` : "Belum ada barang di daftar"}
+        </p>
+      </AppHero>
 
       {showAdd && (
         <form onSubmit={onAdd} className="grid gap-3 rounded-2xl border border-line bg-base p-5 sm:grid-cols-[1fr_180px_auto] print:hidden">
@@ -130,11 +135,12 @@ export function TasSiaga() {
       )}
 
       {adaItem && (
-        <div className="rounded-2xl border border-line bg-base p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[16px] font-semibold text-ink">Kelengkapan {pct}%</p>
+        <div className="rounded-2xl bg-ink p-6 text-white">
+          <p className="font-display text-[40px] leading-none font-semibold tracking-[-0.03em]">{pct}%</p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[15px] text-white/75">Kelengkapan tas siaga</p>
             {hampirKadaluarsa > 0 && (
-              <p className="text-[14px] text-waspada">{hampirKadaluarsa} barang kedaluwarsa dalam 60 hari</p>
+              <p className="text-[14px] text-white">{hampirKadaluarsa} barang kedaluwarsa dalam 60 hari</p>
             )}
           </div>
           <div
@@ -143,10 +149,20 @@ export function TasSiaga() {
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
-            className="mt-3 h-2 w-full overflow-hidden rounded-full bg-line"
+            className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/15"
           >
-            <div className="h-full rounded-full bg-accent-dark transition-[width] duration-500" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-white transition-[width] duration-500" style={{ width: `${pct}%` }} />
           </div>
+        </div>
+      )}
+
+      {!adaItem && (
+        <div className="rounded-2xl border border-line bg-base p-6 text-center print:hidden md:p-9">
+          <EmptyIllustration />
+          <p className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Tasmu masih kosong</p>
+          <p className="mx-auto mt-2 max-w-[52ch] text-[16px] leading-[1.6] text-ink-3">
+            Tambahkan barang sendiri atau mulai dari daftar saran di bawah.
+          </p>
         </div>
       )}
 

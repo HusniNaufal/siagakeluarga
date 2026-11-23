@@ -36,7 +36,7 @@ export function Masuk() {
   }
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-base">
       <div className="relative flex w-full flex-col justify-center overflow-hidden px-6 py-16 lg:w-auto lg:min-w-[640px] lg:px-[100px]">
         <GrafisRumah className="absolute bottom-8 left-[100px] hidden w-[220px] xl:[@media(min-height:840px)]:block" />
 
@@ -45,19 +45,20 @@ export function Masuk() {
             <Logo />
           </Link>
 
-          <form onSubmit={onSubmit} className="mt-12 w-full max-w-[440px] space-y-7">
-            <h1 className="text-[32px] font-semibold tracking-[-0.02em] text-[#0B2545]">
+          <form onSubmit={onSubmit} className="mt-12 w-full max-w-[440px] space-y-6">
+            <h1 className="t-h2 text-ink">
               Masuk ke akunmu
             </h1>
+            <p className="t-lead text-ink-3">Lanjutkan menyiapkan keluargamu.</p>
 
             {error && (
-              <p className="rounded-xl bg-bahaya/10 px-4 py-3 text-sm text-bahaya">
+              <p role="alert" className="rounded-2xl border border-bahaya/30 bg-bahaya/10 px-4 py-3 text-[15px] text-bahaya">
                 {error}
               </p>
             )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-ink-2">
+              <label htmlFor="email" className="block text-[15px] font-medium text-ink">
                 Email
               </label>
               <input
@@ -66,7 +67,7 @@ export function Masuk() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-[52px] w-full rounded-xl border border-line bg-white px-4 text-base text-ink placeholder:text-muted outline-none focus-visible:border-accent-dark"
+                className="h-14 w-full rounded-2xl border border-line bg-base px-4 text-[17px] text-ink placeholder:text-muted outline-none focus:border-ink"
                 placeholder="budi@email.com"
               />
             </div>
@@ -74,7 +75,7 @@ export function Masuk() {
             <div className="space-y-2">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-ink-2"
+                className="block text-[15px] font-medium text-ink"
               >
                 Kata sandi
               </label>
@@ -85,13 +86,13 @@ export function Masuk() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-[52px] w-full rounded-xl border border-line bg-white pl-4 pr-12 text-base text-ink placeholder:text-muted outline-none focus-visible:border-accent-dark"
+                  className="h-14 w-full rounded-2xl border border-line bg-base pl-4 pr-14 text-[17px] text-ink placeholder:text-muted outline-none focus:border-ink"
                   placeholder="••••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-ink transition-colors cursor-pointer"
+                  className="absolute right-1 top-1/2 flex size-12 -translate-y-1/2 items-center justify-center rounded-full text-muted hover:text-ink transition-colors cursor-pointer"
                   aria-label={showPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
                 >
                   {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
@@ -102,17 +103,17 @@ export function Masuk() {
             <button
               type="submit"
               disabled={loading}
-              className="h-[52px] w-full rounded-full bg-accent-dark text-base font-semibold text-white transition-transform hover:scale-[1.01] disabled:opacity-60"
+              className="h-14 w-full rounded-full bg-accent-dark text-[17px] font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-60"
             >
               {loading ? "Memproses..." : "Masuk"}
             </button>
 
-            <Link to="/daftar" className="block text-sm text-accent-dark">
+            <Link to="/daftar" className="inline-flex min-h-11 items-center text-[15px] font-medium text-accent-dark hover:text-accent-hover hover:underline">
               Belum punya akun? Daftar
             </Link>
 
-            {/* Trust Strip khusus tampilan Mobile (persis siagakeluarga.fig Node 1683) */}
-            <div className="mt-6 flex items-center rounded-xl bg-paper px-4 py-3 text-xs text-ink-2 lg:hidden">
+            {/* Catatan kepercayaan, hanya di ponsel */}
+            <div className="mt-6 flex items-center rounded-2xl bg-paper px-4 py-3 text-[15px] text-ink-3 lg:hidden">
               <span>
                 Data keluargamu terenkripsi, disusun dari panduan resmi BNPB
               </span>

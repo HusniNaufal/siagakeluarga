@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useAdminGuides, useCreateGuide, useDeleteGuide, useReindexGuides } from "@/hooks/useAdmin";
+import { AppHero } from "@/components/app/AppHero";
 
 export function AdminPanduan() {
   const { data: guides, isLoading } = useAdminGuides();
@@ -36,41 +37,48 @@ export function AdminPanduan() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <AppHero
+        variasi="gelombang"
+        aksi={
+          <>
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={daftar.length === 0}
+          className="h-11 rounded-full border border-line bg-base px-4 text-[14px] font-semibold text-ink hover:bg-tint disabled:opacity-50"
+        >
+          Ekspor CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowAdd((v) => !v)}
+          className="inline-flex h-11 items-center gap-1.5 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white hover:bg-accent-hover"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Tambah panduan
+        </button>
+          </>
+        }
+      >
         <h1>Panduan</h1>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            type="button"
-            onClick={exportCsv}
-            disabled={daftar.length === 0}
-            className="h-10 rounded-full border border-line bg-base px-4 text-[14px] font-semibold text-ink hover:bg-tint disabled:opacity-50"
-          >
-            Ekspor CSV
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAdd((v) => !v)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white hover:bg-accent-hover"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Tambah panduan
-          </button>
-        </div>
-      </div>
+        <p className="mt-1 max-w-[56ch] text-[16px] text-ink-3">
+          Kelola isi panduan kesiapsiagaan yang juga menjadi sumber jawaban asisten.
+        </p>
+      </AppHero>
 
-      <div className="rounded-2xl border border-line bg-base p-5">
-        <p className="text-[14px] text-muted">Panduan tercatat</p>
-        <p className="font-display mt-1 text-[34px] leading-none font-semibold tracking-[-0.03em] text-ink">{daftar.length}</p>
+      <div className="rounded-2xl bg-ink p-5 text-white">
+        <p className="font-display text-[40px] leading-none font-semibold tracking-[-0.03em]">{daftar.length}</p>
+        <p className="mt-2 text-[15px] text-white/75">Panduan tercatat</p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => reindex.mutate()}
             disabled={reindex.isPending || daftar.length === 0}
-            className="h-10 rounded-full border border-line px-4 text-[14px] font-semibold text-ink hover:bg-tint disabled:opacity-50"
+            className="h-10 rounded-full border border-white/40 px-4 text-[14px] font-semibold text-white hover:bg-white/10 disabled:opacity-50"
           >
             {reindex.isPending ? "Membuat indeks…" : "Bangun ulang indeks asisten AI"}
           </button>
-          <p role="status" aria-live="polite" className="text-[14px] text-ink-3">
+          <p role="status" aria-live="polite" className="text-[14px] text-white/75">
             {reindex.isSuccess &&
               `${reindex.data.indexed} dari ${reindex.data.total} panduan terindeks${
                 reindex.data.failed.length ? `, ${reindex.data.failed.length} gagal` : ""

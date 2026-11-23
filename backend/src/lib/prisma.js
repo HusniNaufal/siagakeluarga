@@ -5,6 +5,12 @@ import { mockDb } from './mockDb.js';
 
 const globalForPrisma = globalThis;
 
+// Database tiruan di memori HANYA untuk pengembangan lokal. Di produksi (NODE_ENV=production atau Vercel)
+// kegagalan database harus menjadi galat, bukan diam-diam beralih ke data tiruan yang memuat akun demo.
+// Paksa aktif dengan ALLOW_MOCK_DB=true bila memang diperlukan.
+const bolehMock =
+  process.env.ALLOW_MOCK_DB === 'true' || !(process.env.NODE_ENV === 'production' || process.env.VERCEL);
+
 let useFallback = false;
 let realPrisma = null;
 
@@ -16,6 +22,7 @@ try {
   const adapter = new PrismaPg({ connectionString: connectionString || 'postgresql://localhost:5432/siaga', max: 3 });
   realPrisma = new PrismaClient({ adapter });
 } catch (err) {
+  if (!bolehMock) throw err;
   console.warn('[db] Inisialisasi Prisma pg adapter gagal, menggunakan mock lokal:', err.message);
   useFallback = true;
 }
@@ -42,6 +49,7 @@ const createResilientClient = () => {
             return await realPrisma[prop](...args);
           } catch (err) {
             if (isConnError(err)) {
+              if (!bolehMock) throw err;
               if (!useFallback) {
                 console.warn('[db] PostgreSQL tidak terjangkau. Beralih ke penyimpanan lokal in-memory.');
                 useFallback = true;
@@ -56,6 +64,9 @@ const createResilientClient = () => {
       return new Proxy({}, {
         get(_modelTarget, method) {
           return async (...args) => {
+            if (!bolehMock && (!realPrisma || !realPrisma[prop] || typeof realPrisma[prop][method] !== 'function')) {
+              throw new Error(`Model ${String(prop)}.${String(method)} tidak tersedia pada klien Prisma. Jalankan prisma generate dan migrasi.`);
+            }
             if (useFallback || !realPrisma || !realPrisma[prop] || typeof realPrisma[prop][method] !== 'function') {
               if (mockDb[prop] && typeof mockDb[prop][method] === 'function') {
                 return mockDb[prop][method](...args);
@@ -67,6 +78,7 @@ const createResilientClient = () => {
               return await realPrisma[prop][method](...args);
             } catch (err) {
               if (isConnError(err)) {
+                if (!bolehMock) throw err;
                 if (!useFallback) {
                   console.warn(`[db] PostgreSQL offline (${err.code || 'ECONNREFUSED'}). Menggunakan data lokal untuk ${String(prop)}.${String(method)}`);
                   useFallback = true;

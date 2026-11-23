@@ -45,9 +45,9 @@ export function Stats() {
             >
               <ListChecks className="size-6" strokeWidth={1.6} aria-hidden="true" />
               <div className="mt-10">
-                <p className="font-display text-[64px] leading-none font-semibold tracking-[-0.04em]">4</p>
+                <p className="font-display text-[64px] leading-none font-semibold tracking-[-0.04em]">3.233</p>
                 <p className="mt-3 max-w-[34ch] text-[16px] leading-[1.5] text-white/90">
-                  hal yang ditulis di rencana: titik kumpul, tugas tiap anggota, kontak darurat, dan isi tas siaga.
+                  kejadian bencana di Indonesia sepanjang 2025. Hampir separuhnya (49,42%) adalah banjir.
                 </p>
               </div>
             </motion.article>
@@ -58,14 +58,18 @@ export function Stats() {
             >
               <Clock3 className="size-6 text-mist" strokeWidth={1.6} aria-hidden="true" />
               <div className="mt-10">
-                <p className="font-display text-[64px] leading-none font-semibold tracking-[-0.04em]">3 hari</p>
+                <p className="font-display text-[64px] leading-none font-semibold tracking-[-0.04em]">48%</p>
                 <p className="mt-3 max-w-[34ch] text-[16px] leading-[1.5] text-mist">
-                  prakiraan BMKG untuk kelurahan rumahmu, per 3 jam.
+                  warga memiliki skor kesiapsiagaan rendah menghadapi banjir.
                 </p>
               </div>
             </motion.article>
           </div>
         </div>
+
+        <p className="mt-5 max-w-[80ch] text-[13px] leading-[1.6] text-muted">
+          Sumber: rekap BNPB 2025 melalui GoodStats; studi Health Collaborative Center melalui Kompas.com (2024).
+        </p>
       </div>
     </section>
   );

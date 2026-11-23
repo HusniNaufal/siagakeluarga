@@ -2,8 +2,18 @@ import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { FASE_LABEL, findGuide, type Fase } from "@/content/panduan";
+import { cn } from "@/lib/utils";
+import type { JenisBencana } from "@/lib/types";
 
 const FASES: Fase[] = ["sebelum", "saat", "sesudah"];
+
+const BATANG: Record<JenisBencana, string> = {
+  BANJIR: "bg-banjir",
+  GEMPA: "bg-gempa",
+  LONGSOR: "bg-longsor",
+  CUACA_EKSTREM: "bg-cuaca",
+  TSUNAMI: "bg-tsunami",
+};
 
 export function PanduanDetail() {
   const { jenis } = useParams();
@@ -12,13 +22,18 @@ export function PanduanDetail() {
   const [showModal, setShowModal] = useState(false);
 
   const guide = findGuide(jenis);
-  const fase: Fase = (params.get("fase") as Fase) ?? "sebelum";
+  const param = params.get("fase");
+  const fase: Fase = FASES.includes(param as Fase) ? (param as Fase) : "sebelum";
 
   if (!guide) {
     return (
-      <div className="px-6 py-24 text-center">
-        <p className="text-[#475569]">Panduan tidak ditemukan.</p>
-        <Link to="/panduan" className="mt-4 inline-block text-[#C2410C]">
+      <div className="mx-auto max-w-[680px] px-6 pt-32 pb-24 text-center">
+        <h1 className="t-h2 text-ink">Panduan tidak ditemukan</h1>
+        <p className="mt-3 text-[16px] text-ink-3">Jenis bencana yang kamu cari belum ada di daftar panduan.</p>
+        <Link
+          to="/panduan"
+          className="mt-6 inline-flex h-12 items-center rounded-full bg-accent-dark px-6 text-[15px] font-semibold text-white hover:bg-accent-hover"
+        >
           Kembali ke daftar panduan
         </Link>
       </div>
@@ -28,99 +43,82 @@ export function PanduanDetail() {
   const content = guide.fase[fase];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white px-6 pt-28 pb-24 md:px-[100px]">
-
-      <div className="relative z-10 mx-auto max-w-[1240px]">
-        {/* Back link (Node 1347) */}
-        <Link
-          to="/panduan"
-          className="inline-block text-[14px] font-medium text-[#475569] hover:text-[#0B2545]"
-        >
+    <div className="bg-paper px-6 pt-32 pb-24 md:px-10">
+      <div className="mx-auto max-w-[1100px]">
+        <Link to="/panduan" className="inline-flex min-h-11 items-center text-[15px] font-medium text-ink-3 hover:text-ink">
           ← Panduan bencana
         </Link>
 
-        {/* Judul Header Card (persis siagakeluarga.fig Node 1362) */}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-[#F1F5F9] px-7 py-6">
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h1
-              className="text-[40px] leading-[1.1] font-bold tracking-[-0.02em] md:text-[56px]"
-              style={{ color: guide.color }}
-            >
-              {guide.label}
-            </h1>
-            <p className="mt-3 text-[17px] text-[#475569]">{guide.deskripsi}</p>
+            <span className={cn("mb-4 block h-1 w-12 rounded-full", BATANG[guide.jenis])} aria-hidden="true" />
+            <h1 className="t-h2 text-ink">{guide.label}</h1>
+            <p className="mt-3 max-w-[56ch] text-[17px] leading-[1.6] text-ink-3">{guide.deskripsi}</p>
           </div>
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="h-[52px] rounded-full bg-[#C2410C] px-6 text-[15px] font-semibold text-white transition-colors hover:bg-[#9A3412]"
+            className="h-14 rounded-full bg-accent-dark px-7 text-[16px] font-semibold text-white transition-colors hover:bg-accent-hover"
           >
-            + Tambahkan ke rencana saya
+            Tambahkan ke rencana saya
           </button>
         </div>
 
-        {/* Tabs Sebelum / Saat / Sesudah (persis Node 1368) */}
-        <div className="mt-10 flex w-full max-w-[320px] gap-1.5 rounded-[10px] border border-[#E2E8F0] bg-white p-[5px]">
-          {FASES.map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setParams({ fase: f })}
-              className={`flex-1 rounded-[7px] py-1.5 text-[17px] transition-colors ${
-                fase === f
-                  ? "bg-[#0B2545] font-semibold text-white"
-                  : "font-medium text-[#475569] hover:text-[#0B2545]"
-              }`}
-            >
-              {FASE_LABEL[f]}
-            </button>
-          ))}
+        <div
+          role="tablist"
+          aria-label="Fase bencana"
+          className="mt-10 flex w-full max-w-[360px] gap-1.5 rounded-full border border-line bg-base p-1.5"
+        >
+          {FASES.map((f) => {
+            const active = fase === f;
+            return (
+              <button
+                key={f}
+                type="button"
+                role="tab"
+                id={`tab-${f}`}
+                aria-selected={active}
+                aria-controls="panel-fase"
+                onClick={() => setParams({ fase: f })}
+                className={cn(
+                  "h-11 flex-1 rounded-full text-[15px] transition-colors",
+                  active ? "bg-ink font-semibold text-white" : "font-medium text-ink-3 hover:bg-tint hover:text-ink",
+                )}
+              >
+                {FASE_LABEL[f]}
+              </button>
+            );
+          })}
         </div>
 
-        {/* 2-Column Content (persis Node 1310) */}
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_380px]">
-          {/* Kolom Kiri: Langkah + Catatan & Kontak Darurat (Node 1311..1350) */}
+        <div id="panel-fase" role="tabpanel" aria-labelledby={`tab-${fase}`} className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
-            {content.langkah.map((step, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-5 rounded-[16px] border border-[#E2E8F0] bg-white px-6 py-[22px]"
-              >
-                <span className="text-[20px] font-normal text-[#C2410C]">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <p className="text-[17px] leading-[1.5] text-[#0B2545]">
-                  {step}
-                </p>
-              </div>
-            ))}
+            <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">{content.ringkasan}</h2>
+            <ol className="space-y-3">
+              {content.langkah.map((step, i) => (
+                <li key={step} className="flex items-start gap-5 rounded-2xl border border-line bg-base p-5 md:p-6">
+                  <span className="font-display w-8 shrink-0 text-[26px] leading-none font-semibold tracking-[-0.03em] text-ink">
+                    {i + 1}
+                  </span>
+                  <p className="text-[17px] leading-[1.55] text-ink-3">{step}</p>
+                </li>
+              ))}
+            </ol>
 
-            {/* Catatan & Kontak Darurat (Node 1350) */}
-            <div className="mt-6 rounded-[16px] border border-[#FDBA74] bg-[#FFF7ED] px-6 py-5">
-              <p className="text-[14px] font-semibold text-[#9A3412]">
-                Yang harus dihindari &amp; Kontak Cepat BNPB/BPBD
-              </p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#475569]">
-                {guide.kontak}
-              </p>
+            <div className="rounded-2xl bg-surface p-5 md:p-6">
+              <h3 className="text-[16px] font-semibold text-ink">Yang perlu dihindari dan kontak cepat</h3>
+              <p className="mt-2 text-[15px] leading-[1.6] text-ink-3">{guide.kontak}</p>
             </div>
           </div>
 
-          {/* Kolom Kanan: Kotak Yang Perlu Disiapkan & Kartu Bantuan (Node 1327..1341) */}
-          <div className="space-y-6">
-            {/* Kotak Yang Perlu Disiapkan (Node 1327) */}
-            <div className="rounded-[20px] border border-[#E2E8F0] bg-[#F1F5F9] p-7">
-              <p className="text-[19px] font-semibold text-[#0B2545]">
-                Yang perlu disiapkan
-              </p>
-              <ul className="mt-4 space-y-4">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-line bg-base p-6">
+              <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Yang perlu disiapkan</h2>
+              <ul className="mt-4 space-y-3.5">
                 {content.checklist.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-center gap-3 text-[15px] text-[#0B2545]"
-                  >
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-[6px] bg-[#C2410C] text-white">
-                      <Check className="size-3.5 stroke-[3]" />
+                  <li key={item} className="flex items-start gap-3 text-[16px] leading-[1.45] text-ink">
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-accent-dark text-white">
+                      <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
                     </span>
                     {item}
                   </li>
@@ -128,77 +126,56 @@ export function PanduanDetail() {
               </ul>
             </div>
 
-            {/* Kartu Bantuan Tanya Siaga (Node 1341) */}
-            <div className="rounded-[20px] border border-[#E2E8F0] bg-[#F1F5F9] p-7">
-              <p className="text-[17px] font-semibold text-[#0B2545]">
-                Masih bingung?
-              </p>
-              <p className="mt-2.5 text-[14px] leading-relaxed text-[#475569]">
-                Tanya Siaga bisa jelaskan panduan ini dengan bahasa yang lebih
-                sederhana.
+            <div className="rounded-2xl border border-line bg-base p-6">
+              <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink">Masih bingung?</h2>
+              <p className="mt-2 text-[15px] leading-[1.6] text-ink-3">
+                Tanya Siaga bisa menjelaskan panduan ini dengan bahasa yang lebih sederhana.
               </p>
               <Link
                 to="/tanya"
-                className="mt-3 inline-block text-[14px] font-semibold text-[#C2410C] hover:underline"
+                className="mt-4 inline-flex h-11 items-center rounded-full border border-line bg-base px-5 text-[15px] font-semibold text-ink hover:bg-tint"
               >
-                Tanya Siaga sekarang →
+                Tanya Siaga sekarang
               </Link>
             </div>
           </div>
         </div>
+
+        <p className="mt-10 text-[14px] leading-[1.55] text-muted">
+          Instruksi resmi petugas dan BPBD tetap menjadi acuan utama.
+        </p>
       </div>
 
-      {/* Modal Tambahkan ke Rencana (persis siagakeluarga.fig Node 1419) */}
       {showModal && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#060B14]/55 p-4"
+          aria-label="Tambahkan panduan ke rencana"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night/60 p-4"
         >
-          <div className="w-full max-w-[520px] rounded-[24px] border border-[#E2E8F0] bg-white p-7 shadow-xl">
+          <div className="w-full max-w-[520px] rounded-2xl border border-line bg-base p-6 md:p-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-[22px] font-bold text-[#0B2545]">
-                Tambahkan Panduan ke Rencana
-              </h2>
+              <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Tambahkan panduan ke rencana</h2>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="flex size-8 items-center justify-center rounded-[8px] bg-[#F1F5F9] text-lg font-bold text-[#475569]"
+                aria-label="Tutup"
+                className="flex size-11 items-center justify-center rounded-full text-[22px] leading-none text-muted hover:bg-tint hover:text-ink"
               >
                 ×
               </button>
             </div>
 
-            <p className="mt-3 text-[14px] text-[#475569]">
-              Langkah untuk skenario {guide.label} akan ditambahkan ke rencana keluargamu.
+            <p className="mt-3 text-[16px] leading-[1.6] text-ink-3">
+              Langkah untuk skenario {guide.label.toLowerCase()} (sebelum, saat, dan sesudah) akan terlihat di halaman
+              rencana keluargamu.
             </p>
 
-            <div className="mt-5 space-y-2.5">
-              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-[#F1F5F9] p-3.5 text-[14px] font-medium text-[#0B2545]">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-[6px] bg-[#C2410C] text-xs font-bold text-white">
-                  ✓
-                </span>
-                <span>
-                  Masukkan semua fase (Sebelum, Saat, dan Sesudah {guide.label})
-                </span>
-              </div>
-              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-[#F1F5F9] p-3.5 text-[14px] font-medium text-[#0B2545]">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-[6px] bg-[#C2410C] text-xs font-bold text-white">
-                  ✓
-                </span>
-                <span>Sinkronkan 3 barang wajib ke checklist Tas Siaga</span>
-              </div>
-              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-white p-3.5 text-[14px] text-[#475569]">
-                <span className="size-5 shrink-0 rounded-[6px] border-[1.5px] border-[#CBD5E1] bg-white" />
-                <span>Kirim notifikasi pembaruan ke anggota keluarga lainnya</span>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="h-11 rounded-[10px] border border-[#CBD5E1] bg-white px-5 text-[14px] font-semibold text-[#0B2545]"
+                className="h-12 rounded-full border border-line bg-base px-6 text-[15px] font-semibold text-ink hover:bg-tint"
               >
                 Batal
               </button>
@@ -208,9 +185,9 @@ export function PanduanDetail() {
                   setShowModal(false);
                   navigate("/rencana");
                 }}
-                className="h-11 rounded-[10px] bg-[#C2410C] px-6 text-[14px] font-semibold text-white"
+                className="h-12 rounded-full bg-accent-dark px-6 text-[15px] font-semibold text-white hover:bg-accent-hover"
               >
-                Simpan ke Rencana Saya
+                Buka rencana saya
               </button>
             </div>
           </div>

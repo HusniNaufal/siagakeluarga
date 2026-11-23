@@ -6,6 +6,8 @@ import {
   useDeleteHazardZone,
 } from "@/hooks/useAdmin";
 import { useRegions } from "@/hooks/useRisk";
+import { AppHero } from "@/components/app/AppHero";
+import { cn } from "@/lib/utils";
 import type { JenisBencana, TingkatRisiko } from "@/lib/types";
 
 const JENIS: JenisBencana[] = ["BANJIR", "GEMPA", "LONGSOR", "CUACA_EKSTREM", "TSUNAMI"];
@@ -64,37 +66,50 @@ export function AdminZona() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <AppHero
+        variasi="cincin"
+        aksi={
+          <>
+        <button
+          type="button"
+          onClick={exportCsv}
+          disabled={daftar.length === 0}
+          className="h-11 rounded-full border border-line bg-base px-4 text-[14px] font-semibold text-ink hover:bg-tint disabled:opacity-50"
+        >
+          Ekspor CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowAdd((v) => !v)}
+          className="inline-flex h-11 items-center gap-1.5 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white hover:bg-accent-hover"
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Tambah zona
+        </button>
+          </>
+        }
+      >
         <h1>Zona bahaya</h1>
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={exportCsv}
-            disabled={daftar.length === 0}
-            className="h-10 rounded-full border border-line bg-base px-4 text-[14px] font-semibold text-ink hover:bg-tint disabled:opacity-50"
-          >
-            Ekspor CSV
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAdd((v) => !v)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white hover:bg-accent-hover"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Tambah zona
-          </button>
-        </div>
-      </div>
+        <p className="mt-1 max-w-[56ch] text-[16px] text-ink-3">
+          Kelola zona rawan bencana per wilayah yang menjadi dasar penilaian risiko.
+        </p>
+      </AppHero>
 
       <dl className="grid gap-3 sm:grid-cols-3">
         {[
           ["Zona tercatat", daftar.length],
           ["Risiko tinggi", tinggi],
           ["Wilayah tercakup", wilayah],
-        ].map(([label, nilai]) => (
-          <div key={label} className="rounded-2xl border border-line bg-base p-5">
-            <dt className="text-[14px] text-muted">{label}</dt>
-            <dd className="font-display mt-1 text-[34px] leading-none font-semibold tracking-[-0.03em] text-ink">{nilai}</dd>
+        ].map(([label, nilai], i) => (
+          <div
+            key={label}
+            className={cn(
+              "rounded-2xl p-5",
+              i === 0 ? "bg-ink text-white" : i === 1 ? "bg-accent-dark text-white" : "border border-line bg-base",
+            )}
+          >
+            <dd className={cn("font-display text-[40px] leading-none font-semibold tracking-[-0.03em]", i > 1 && "text-ink")}>{nilai}</dd>
+            <dt className={cn("mt-2 text-[15px]", i > 1 ? "text-ink-3" : "text-white/75")}>{label}</dt>
           </div>
         ))}
       </dl>

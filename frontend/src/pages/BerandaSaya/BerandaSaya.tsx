@@ -1,12 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useDrills } from "@/hooks/useDrills";
 import { useRisk } from "@/hooks/useRisk";
+import { AppHero } from "@/components/app/AppHero";
 import { StatusMark } from "@/components/ui/StatusMark";
+import { PeringatanKeluarga } from "@/components/app/PeringatanKeluarga";
+import { KabarKeluarga } from "@/components/app/KabarKeluarga";
 import { ProgressRing } from "@/components/ProgressRing";
 import { computeSkorKesiapan } from "@/lib/score";
+
+const TOMBOL_UTAMA =
+  "inline-flex h-12 items-center justify-center rounded-full bg-accent-dark px-6 text-[16px] font-semibold text-white transition-colors hover:bg-accent-hover";
+const TOMBOL_SEKUNDER =
+  "inline-flex h-10 items-center justify-center rounded-full border border-line bg-base px-5 text-[15px] font-semibold text-ink transition-colors hover:bg-tint";
+
+function formatJarak(km: number | null | undefined) {
+  if (km == null) return "";
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+function inisial(nama: string) {
+  return nama
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("");
+}
 
 export function BerandaSaya() {
   const { user } = useAuth();
@@ -23,8 +46,17 @@ export function BerandaSaya() {
   );
   const [showMapModal, setShowMapModal] = useState(false);
 
+  useEffect(() => {
+    if (!showMapModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowMapModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showMapModal]);
+
   if (isLoading || !household) {
-    return <div className="h-40 animate-pulse rounded-2xl bg-muted" />;
+    return <div className="h-40 animate-pulse rounded-2xl bg-surface" />;
   }
 
   const adaRencana = (household.emergency_plans?.length ?? 0) > 0;
@@ -52,14 +84,15 @@ export function BerandaSaya() {
   const kecamatanLabel =
     cuaca && cuaca.tersedia && cuaca.lokasi?.kecamatan
       ? cuaca.lokasi.kecamatan
-      : household.region?.kecamatan ?? null;
+      : (household.region?.kecamatan ?? null);
 
-  const jumlahAnggota = household.members?.length ?? 0;
+  const anggota = household.members ?? [];
+  const jumlahAnggota = anggota.length;
   const langkah =
     jumlahAnggota === 0
       ? { judul: "Tambahkan anggota keluarga", teks: "Rencana dan tas siaga disusun dari siapa saja yang tinggal di rumah.", to: "/keluarga", tombol: "Tambah anggota" }
       : household.lat == null || household.lng == null
-        ? { judul: "Isi lokasi rumahmu", teks: "Dipakai untuk titik kumpul terdekat dan prakiraan cuaca di kelurahanmu.", to: "/onboarding", tombol: "Isi lokasi" }
+        ? { judul: "Isi lokasi rumahmu", teks: "Dipakai untuk titik kumpul terdekat dan prakiraan cuaca di kelurahanmu.", to: "/keluarga", tombol: "Isi lokasi" }
         : !adaRencana
           ? { judul: "Susun rencana daruratmu", teks: "Titik kumpul dan tugas tiap anggota ditulis dalam satu halaman.", to: "/rencana", tombol: "Susun rencana" }
           : totalCount === 0
@@ -69,224 +102,203 @@ export function BerandaSaya() {
               : { judul: "Coba latihan singkat", teks: "Latihan mengecek apakah keluargamu tahu langkah pertama.", to: "/latihan", tombol: "Mulai latihan" };
 
   return (
-    <div className="space-y-5">
-      {/* Greeting & Header Quick Actions (persis siagakeluarga.fig Node 1860..1868) */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0B2545]">
-            Halo{namaDepan ? `, ${namaDepan}` : ""}
-          </h1>
-          <p className="mt-1 text-[15px] text-[#475569]">
-            {tanggalHariIni}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="rounded-[8px] border border-[#E2E8F0] bg-white px-3.5 py-2 text-[12px] text-[#475569]">
-            {kecamatanLabel ? `Kec. ${kecamatanLabel}` : "Lokasi belum diisi"}
-          </div>
-          <Link
-            to="/rencana"
-            className="rounded-[8px] bg-[#0B2545] px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#143258]"
-          >
+    <div className="mx-auto max-w-[960px] space-y-6">
+      {/* Salam */}
+      <AppHero
+        variasi="rumah"
+        aksi={
+          <Link to="/rencana" className={TOMBOL_SEKUNDER}>
             Perbarui rencana
           </Link>
-        </div>
-      </div>
+        }
+      >
+        <h1>Halo{namaDepan ? `, ${namaDepan}` : ""}</h1>
+        <p className="mt-2 max-w-[56ch] text-[16px] leading-[1.55] text-ink-3">
+          {tanggalHariIni}
+          {kecamatanLabel ? ` · Kec. ${kecamatanLabel}` : " · Lokasi belum diisi"}. Ini ringkasan kesiapsiagaan keluargamu hari ini.
+        </p>
+      </AppHero>
 
-      {/* Banner Cuaca Wrap (persis siagakeluarga.fig Node 1869..1876) */}
-      <div className="relative rounded-[20px] bg-[#0B2545] px-7 pt-14 pb-6 text-white">
-        {statusCuaca && <StatusMark tingkat={statusCuaca} tone="gelap" className="absolute top-5 left-7 w-[220px]" />}
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-[12px] text-white/65">
-              Prakiraan BMKG{kecamatanLabel ? ` · ${kecamatanLabel}` : ""}
-            </p>
-            <h2 className="text-[20px] font-semibold text-[#F1F5F9] md:text-[22px]">
-              {cuaca?.tersedia
-                ? `${cuaca.saat_ini.cuaca} saat ini`
-                : "Prakiraan belum tersedia"}
+      {/* Banner cuaca hari ini */}
+      <section aria-labelledby="judul-cuaca" className="rounded-2xl bg-night p-6 text-white">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div>
+            <h2 id="judul-cuaca" className="text-[15px] font-normal text-mist">
+              Cuaca hari ini{kecamatanLabel ? `, ${kecamatanLabel}` : ""}
             </h2>
+            <p className="mt-2 text-[20px] font-semibold tracking-[-0.015em]">
+              {cuaca?.tersedia ? `${cuaca.saat_ini.cuaca} saat ini` : "Prakiraan belum tersedia"}
+            </p>
+            <p className="mt-1 text-[14px] text-mist">Prakiraan BMKG</p>
           </div>
-          <p className="text-[40px] font-normal text-[#F1F5F9]">
+          <p className="font-display text-[48px] leading-none font-semibold tracking-[-0.03em]">
             {cuaca?.tersedia ? `${Math.round(cuaca.saat_ini.suhu_c)}°` : "–"}
           </p>
         </div>
-      </div>
+        {statusCuaca && <StatusMark tingkat={statusCuaca} tone="gelap" className="mt-6" />}
+        {cuaca?.tersedia && cuaca.prakiraan.length > 0 && (
+          <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-white/10 pt-5 sm:grid-cols-5">
+            {cuaca.prakiraan.slice(0, 5).map((e) => (
+              <li key={e.waktu_lokal}>
+                <p className="text-[14px] text-mist">{e.waktu_lokal.slice(11, 16)}</p>
+                <p className="mt-0.5 font-display text-[24px] leading-none font-semibold tracking-[-0.03em]">{Math.round(e.suhu_c)}°</p>
+                <p className="mt-1 text-[13px] leading-[1.35] text-mist">
+                  {e.cuaca}
+                  {e.curah_hujan_mm > 0 ? `, ${e.curah_hujan_mm} mm` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-      {/* Cards Row: Skor kesiapan, Tas siaga, Langkah berikutnya (persis Node 1877..1897) */}
-      <div className="grid gap-5 md:grid-cols-3">
-        {/* Card 1: Skor Kesiapan (Node 1878) */}
-        <div className="flex flex-col items-center justify-between rounded-[20px] border border-[#E2E8F0] bg-white p-6 text-center">
-          <p className="text-[13px] text-[#475569]">Skor kesiapan</p>
-          <div className="my-3">
-            <ProgressRing value={skor} size={116} />
-          </div>
-          <p className="text-[13px] text-[#475569]">Terus lengkapi rencanamu</p>
-        </div>
+      <PeringatanKeluarga shareToken={household.share_token} />
 
-        {/* Card 2: Tas Siaga (Node 1886) */}
-        <div className="flex flex-col justify-between rounded-[20px] border border-[#E2E8F0] bg-white p-6">
-          <p className="text-[13px] text-[#475569]">Tas siaga</p>
-          <div className="my-3">
-            <p className="text-[36px] leading-none font-normal text-[#0B2545]">
-              {siapCount}/{totalCount}
-            </p>
-            <div className="mt-4 h-2.5 w-full overflow-hidden rounded-[5px] bg-[#E2E8F0]">
-              <div
-                className="h-full rounded-[5px] bg-[#C2410C]"
-                style={{ width: `${pctTas}%` }}
-              />
-            </div>
+      {/* Skor, tas siaga, langkah berikutnya */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <section aria-labelledby="judul-skor" className="flex flex-col items-center rounded-2xl bg-ink p-6 text-center text-white">
+          <h2 id="judul-skor" className="text-[20px] font-semibold tracking-[-0.015em] text-white">
+            Skor kesiapsiagaan
+          </h2>
+          <div className="my-4">
+            <ProgressRing value={skor} size={124} tone="gelap" />
           </div>
-          <p className="text-[13px] text-[#475569]">
-            {belumCount} barang perlu dicek
+          <p className="text-[15px] text-white/75">Dari 100, dihitung dari rencana, tas siaga, dan latihan.</p>
+        </section>
+
+        <section aria-labelledby="judul-tas" className="flex flex-col rounded-2xl bg-accent-dark p-6 text-white">
+          <h2 id="judul-tas" className="text-[20px] font-semibold tracking-[-0.015em] text-white">
+            Tas siaga
+          </h2>
+          <p className="mt-4 font-display text-[48px] leading-none font-semibold tracking-[-0.03em] text-white">
+            {siapCount}
+            <span className="text-white/65">/{totalCount}</span>
           </p>
-        </div>
-
-        {/* Card 3: Langkah Berikutnya (Node 1892) */}
-        <div className="flex flex-col justify-between rounded-[20px] border border-[#E2E8F0] bg-white p-6">
-          <div>
-            <p className="text-[13px] text-[#475569]">Langkah berikutnya</p>
-            <p className="mt-2.5 text-[18px] leading-[1.3] font-semibold text-[#0B2545]">{langkah.judul}</p>
-            <p className="mt-1.5 text-[14px] leading-[1.5] text-[#475569]">{langkah.teks}</p>
-          </div>
-          <Link
-            to={langkah.to}
-            className="mt-4 flex h-[44px] w-full items-center justify-center rounded-[8px] bg-[#C2410C] text-[14px] font-semibold text-white transition-colors hover:bg-[#9A3412]"
+          <div
+            role="progressbar"
+            aria-label="Kemajuan tas siaga"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={pctTas}
+            className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-white/25"
           >
+            <div className="h-full rounded-full bg-white" style={{ width: `${pctTas}%` }} />
+          </div>
+          <p className="mt-3 text-[15px] text-white/90">
+            {totalCount === 0 ? "Belum ada barang di tas siaga." : `${belumCount} barang masih perlu disiapkan.`}
+          </p>
+        </section>
+
+        <section aria-labelledby="judul-langkah" className="flex flex-col justify-between rounded-2xl border border-line bg-base p-6">
+          <div>
+            <h2 id="judul-langkah" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+              Langkah berikutnya
+            </h2>
+            <p className="mt-3 text-[17px] leading-[1.35] font-semibold text-ink">{langkah.judul}</p>
+            <p className="mt-1.5 text-[15px] leading-[1.55] text-ink-3">{langkah.teks}</p>
+          </div>
+          <Link to={langkah.to} className={`${TOMBOL_UTAMA} mt-5 h-10 text-[15px]`}>
             {langkah.tombol}
           </Link>
-        </div>
+        </section>
       </div>
 
-      {/* Ringkasan Titik Kumpul (persis Node 1898) */}
-      <div className="flex items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-white px-7 py-5">
+      <div className="grid gap-4 md:grid-cols-2">
+      {/* Titik kumpul terdekat */}
+      <section
+        aria-labelledby="judul-kumpul"
+        className="flex flex-wrap content-between items-start justify-between gap-4 rounded-2xl border border-line bg-base p-6"
+      >
         <div>
-          <p className="text-[13px] text-[#475569]">Titik kumpul terdekat</p>
-          <p className="mt-1 text-[17px] font-semibold text-[#0B2545]">
+          <h2 id="judul-kumpul" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+            Titik kumpul terdekat
+          </h2>
+          <p className="mt-2 text-[16px] text-ink-3">
             {titikTerdekat
-              ? `${titikTerdekat.nama}${titikTerdekat.jarak_km != null ? ` (${titikTerdekat.jarak_km < 1 ? `${Math.round(titikTerdekat.jarak_km * 1000)} m` : `${titikTerdekat.jarak_km.toFixed(1)} km`})` : ""}`
-              : "Belum ada titik kumpul untuk wilayahmu"}
+              ? `${titikTerdekat.nama}${titikTerdekat.jarak_km != null ? `, ${formatJarak(titikTerdekat.jarak_km)} dari rumah` : ""}`
+              : "Belum ada titik kumpul untuk wilayahmu."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowMapModal(true)}
-          className="rounded-[8px] border border-[#E2E8F0] bg-white px-4 py-2 text-[14px] font-semibold text-[#0B2545] hover:bg-[#F1F5F9]"
-        >
-          Lihat peta
-        </button>
-      </div>
+        {titikTerdekat && (
+          <button type="button" onClick={() => setShowMapModal(true)} className={TOMBOL_SEKUNDER}>
+            Lihat rute
+          </button>
+        )}
+      </section>
 
-      {/* Cuaca beberapa jam ke depan: data BMKG asli, disembunyikan bila belum tersedia. */}
-      {cuaca?.tersedia && (
-        <ul className="grid grid-cols-2 gap-3 rounded-[16px] border border-[#E2E8F0] bg-white p-4 sm:grid-cols-5">
-          {cuaca.prakiraan.slice(0, 5).map((e, i) => (
-            <li
-              key={e.waktu_lokal}
-              className={`flex flex-col items-center gap-1 rounded-[12px] px-3 py-3.5 text-center ${
-                i === 0 ? "border border-[#0B2545]/25 bg-[#F1F5F9]" : "border border-[#E2E8F0] bg-[#F8FAFC]"
-              }`}
-            >
-              <p className="text-[12px] text-[#475569]">{e.waktu_lokal.slice(11, 16)}</p>
-              <p className="text-[18px] text-[#0B2545]">{Math.round(e.suhu_c)}°</p>
-              <p className="text-[12px] font-medium text-[#475569]">
-                {e.cuaca}
-                {e.curah_hujan_mm > 0 ? ` · ${e.curah_hujan_mm} mm` : ""}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
 
-      {/* Anggota Keluarga Ringkas (persis Node 1925..1943) */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-[#E2E8F0] bg-white px-6 py-4">
-        <div className="flex flex-wrap items-center gap-6">
-          {(household.members ?? []).length === 0 && (
-            <span className="text-[14px] text-[#475569]">Belum ada anggota keluarga.</span>
-          )}
-          {(household.members ?? []).map((m) => (
-            <div key={m.id} className="flex items-center gap-2.5">
-              <span
-                aria-hidden="true"
-                className="flex size-9 items-center justify-center rounded-full bg-[#F1F5F9] text-[11px] text-[#0B2545]"
-              >
-                {m.panggilan
-                  .split(" ")
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((s) => s[0]?.toUpperCase())
-                  .join("")}
-              </span>
-              <span className="text-[13px] font-medium text-[#0B2545]">{m.panggilan}</span>
-            </div>
-          ))}
+      {/* Anggota keluarga */}
+      <section aria-labelledby="judul-anggota" className="rounded-2xl border border-line bg-base p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="judul-anggota" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+            Anggota keluarga
+          </h2>
+          <Link to="/keluarga" className={TOMBOL_SEKUNDER}>
+            Lihat profil keluarga
+          </Link>
         </div>
+        {anggota.length === 0 ? (
+          <p className="mt-3 text-[16px] text-ink-3">Belum ada anggota keluarga.</p>
+        ) : (
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
+            {anggota.map((m) => (
+              <li key={m.id} className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-10 items-center justify-center rounded-full bg-tint text-[14px] font-semibold text-ink"
+                >
+                  {inisial(m.panggilan)}
+                </span>
+                <span className="text-[16px] font-medium text-ink">{m.panggilan}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-        <Link
-          to="/keluarga"
-          className="text-[13px] font-semibold text-[#C2410C] hover:underline"
-        >
-          Lihat profil keluarga
-        </Link>
       </div>
 
-      {/* Modal Peta Titik Kumpul (persis siagakeluarga.fig Node 1944 / 2061) */}
+      <KabarKeluarga shareToken={household.share_token} />
+
+      {/* Rute ke titik kumpul */}
       {showMapModal && titikTerdekat && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B2545]/45 p-4"
+          aria-labelledby="judul-rute"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night/60 p-4"
         >
-          <div className="flex w-full max-w-[620px] flex-col gap-4 rounded-[18px] border border-[#E2E8F0] bg-white px-8 py-7 shadow-[0_20px_48px_rgba(11,37,69,0.16)]">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-semibold text-[#0B2545]">
-                Rute ke Titik Kumpul Terdekat
+          <div className="w-full max-w-[560px] rounded-2xl border border-line bg-base p-6">
+            <div className="flex items-start justify-between gap-4">
+              <h2 id="judul-rute" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+                Rute ke titik kumpul
               </h2>
               <button
                 type="button"
                 onClick={() => setShowMapModal(false)}
-                className="text-[20px] leading-none font-medium text-[#64748B] hover:text-[#0B2545]"
+                aria-label="Tutup"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-tint hover:text-ink"
               >
-                ×
+                <X className="size-5" aria-hidden="true" />
               </button>
             </div>
-
-            {/* Tanpa kotak bersarang abu-abu/krem — tipografi tampil langsung dan rapi (Node 2066) */}
-            <div className="space-y-1.5 py-1">
-              <p className="text-[16px] font-semibold text-[#0B2545]">
-                {titikTerdekat.nama}
-              </p>
-              <p className="text-[13px] leading-[20px] text-[#475569]">
-                {titikTerdekat.jarak_km != null
-                  ? `Sekitar ${titikTerdekat.jarak_km < 1 ? `${Math.round(titikTerdekat.jarak_km * 1000)} m` : `${titikTerdekat.jarak_km.toFixed(1)} km`} dari rumah. `
-                  : ""}
-                Cek jalur dan kondisi jalan sebelum berangkat.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-[12px] font-medium text-[#64748B]">
-                Koordinat titik kumpul dari data wilayah
-              </p>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowMapModal(false)}
-                  className="h-[42px] rounded-[8px] border border-[#CBD5E1] bg-white px-[18px] text-[13px] font-semibold text-[#0B2545]"
-                >
-                  Tutup
-                </button>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${titikTerdekat.lat},${titikTerdekat.lng}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex h-[42px] items-center rounded-[8px] bg-[#C2410C] px-5 text-[13px] font-semibold text-white"
-                >
-                  Buka di Google Maps →
-                </a>
-              </div>
+            <p className="mt-3 text-[17px] font-semibold text-ink">{titikTerdekat.nama}</p>
+            <p className="mt-1 text-[15px] leading-[1.55] text-ink-3">
+              {titikTerdekat.jarak_km != null ? `Sekitar ${formatJarak(titikTerdekat.jarak_km)} dari rumah. ` : ""}
+              Cek jalur dan kondisi jalan sebelum berangkat.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <button type="button" onClick={() => setShowMapModal(false)} className={TOMBOL_SEKUNDER}>
+                Tutup
+              </button>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${titikTerdekat.lat},${titikTerdekat.lng}`}
+                target="_blank"
+                rel="noreferrer"
+                className={`${TOMBOL_UTAMA} h-10 text-[15px]`}
+              >
+                Buka di Google Maps
+              </a>
             </div>
           </div>
         </div>

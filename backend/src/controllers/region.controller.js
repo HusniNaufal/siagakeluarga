@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js';
-import { getBmkgForecast } from '../services/bmkg.service.js';
+import { forecastFor } from '../services/cuaca.service.js';
+import { resolveAdm4 } from '../services/wilayah.service.js';
 import { sortAssemblyPoints } from '../services/geo.service.js';
 
 export const listRegions = async (req, res, next) => {
@@ -44,7 +45,18 @@ export const getRisk = async (req, res, next) => {
     });
     if (!region) return res.status(404).json({ success: false, message: 'Wilayah tidak ditemukan' });
 
-    const cuaca = await getBmkgForecast(region.kode_wilayah);
+    // Cuaca diambil untuk desa/kelurahan di koordinat rumah bila ada. Kode wilayah pada data wilayah
+    // hanya cadangan: tidak selalu cocok dengan nama kelurahan sebenarnya.
+    let kodeBmkg = region.kode_wilayah;
+    if (lat != null && lng != null) {
+      try {
+        const w = await resolveAdm4(lat, lng);
+        if (w) kodeBmkg = w.kode;
+      } catch {
+        // pakai kode cadangan
+      }
+    }
+    const cuaca = await forecastFor(kodeBmkg);
 
     res.json({
       success: true,

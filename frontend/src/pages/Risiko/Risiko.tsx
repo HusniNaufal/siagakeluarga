@@ -4,6 +4,8 @@ import { useHousehold } from "@/hooks/useHousehold";
 import { useRisk } from "@/hooks/useRisk";
 import { jamDari, namaHari, useCuaca } from "@/hooks/useCuaca";
 import { StatusMark } from "@/components/ui/StatusMark";
+import { AppHero } from "@/components/app/AppHero";
+import { PetaLeaflet, type TitikPeta } from "@/components/map/PetaLeaflet";
 import type { TingkatRisiko } from "@/lib/types";
 
 const TINGKAT_LABEL: Record<TingkatRisiko, string> = {
@@ -72,10 +74,13 @@ export function Risiko() {
 
   return (
     <div className="space-y-10">
-      <div>
+      <AppHero variasi="cincin">
         <h1>Risiko dan cuaca</h1>
-        {namaWilayah && <p className="mt-1 text-[15px] text-ink-3">{namaWilayah}</p>}
-      </div>
+        <p className="mt-1 max-w-[56ch] text-[16px] text-ink-3">
+          Prakiraan cuaca BMKG dan tingkat risiko bencana di sekitar rumahmu.
+          {namaWilayah ? ` Wilayah: ${namaWilayah}.` : ""}
+        </p>
+      </AppHero>
 
       {!punyaLokasi && (
         <p className="rounded-2xl border border-dashed border-line bg-base p-6 text-[16px] leading-[1.6] text-ink-3">
@@ -187,6 +192,17 @@ export function Risiko() {
             Belum ada titik kumpul tercatat untuk wilayahmu. Tanyakan ke RT/RW atau BPBD setempat.
           </p>
         ) : (
+          <>
+          <PetaLeaflet
+            className="mt-4"
+            tinggi={300}
+            titik={[
+              ...(household.lat != null && household.lng != null
+                ? [{ lat: household.lat, lng: household.lng, label: "Rumahmu", jenis: "rumah" } as TitikPeta]
+                : []),
+              ...titik.slice(0, 3).map((t) => ({ lat: t.lat, lng: t.lng, label: t.nama, jenis: "kumpul" }) as TitikPeta),
+            ]}
+          />
           <ul className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-base">
             {titik.slice(0, 3).map((t) => (
               <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
@@ -208,6 +224,7 @@ export function Risiko() {
               </li>
             ))}
           </ul>
+          </>
         )}
       </section>
     </div>

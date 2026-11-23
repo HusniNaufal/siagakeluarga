@@ -27,6 +27,11 @@ enum TingkatRisiko {
   TINGGI
 }
 
+enum StatusKabar {
+  AMAN
+  BUTUH_BANTUAN
+}
+
 enum KelompokUmur {
   BALITA
   ANAK
@@ -85,6 +90,13 @@ model Household {
   emergency_plans EmergencyPlan[]
   kit_items       KitItem[]
   drills          Drill[]
+  checkins        CheckIn[]
+
+  // Peringatan ke grup keluarga lewat Telegram (opsional).
+  telegram_chat_id            String?
+  telegram_kode               String?   @unique
+  peringatan_terakhir_at      DateTime?
+  peringatan_terakhir_tingkat String?
 }
 
 model Member {
@@ -127,4 +139,20 @@ model GuideChunk {
   sumber    String
   isi       String                    @db.Text
   embedding Unsupported("vector(768)")?
+}
+
+// Kabar "Saya aman": dikirim anggota keluarga lewat tautan rencana, tanpa login.
+model CheckIn {
+  id           String      @id @default(uuid())
+  household_id String
+  member_id    String?
+  nama         String
+  status       StatusKabar
+  lat          Float?
+  lng          Float?
+  pesan        String?
+  created_at   DateTime    @default(now())
+  household    Household   @relation(fields: [household_id], references: [id], onDelete: Cascade)
+
+  @@index([household_id, created_at])
 }

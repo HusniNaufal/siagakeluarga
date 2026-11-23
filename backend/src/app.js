@@ -55,6 +55,11 @@ app.use('/api/ai', limiter(10 * 60_000, 30, 'Terlalu banyak permintaan ke asiste
 // Cuaca publik: meneruskan permintaan ke Nominatim dan BMKG, yang tidak boleh dibanjiri.
 app.use('/api/cuaca', limiter(60_000, 20, 'Terlalu banyak permintaan cuaca. Coba lagi sebentar lagi.'));
 app.use('/api/lokasi', limiter(60_000, 15, 'Terlalu banyak pencarian lokasi. Coba lagi sebentar lagi.'));
+// Kabar keluarga dari tautan publik: cukup longgar untuk satu keluarga, cukup ketat untuk mencegah banjir data.
+app.use('/api/share', limiter(10 * 60_000, 60, 'Terlalu banyak permintaan. Coba lagi beberapa menit lagi.'));
+// Telegram dan penjadwal: dilindungi rahasia, dan tetap dibatasi.
+app.use('/api/telegram', limiter(60_000, 60, 'Terlalu banyak permintaan.'));
+app.use('/api/cron', limiter(60_000, 6, 'Terlalu banyak permintaan.'));
 // Batas umum untuk sisanya.
 app.use('/api', limiter(15 * 60_000, 600, 'Terlalu banyak permintaan. Coba lagi beberapa menit lagi.'));
 
