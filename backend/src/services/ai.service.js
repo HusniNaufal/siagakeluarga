@@ -11,9 +11,9 @@ let client;
 const getClient = () => {
   const key = process.env.GEMINI_API_KEY;
   if (!key || /your_gemini_api_key/i.test(key)) {
-    throw aiError(503, 'Layanan AI belum dikonfigurasi (GEMINI_API_KEY kosong).');
+    throw aiError(503, 'Layanan AI belum dikonfigurasi (GEMINI_API_KEY kosong di Vercel).');
   }
-  client ||= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  client ||= new GoogleGenAI({ apiKey: key });
   return client;
 };
 

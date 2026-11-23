@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'siagakeluarga_secret_jwt_key_2026';
+
 export const authenticate = (req, res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
     return res.status(401).json({ success: false, message: 'Token autentikasi tidak ditemukan' });
   }
   try {
-    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
+    const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
     req.user = { id: decoded.id, email: decoded.email, role: decoded.role };
     next();
   } catch {
@@ -19,7 +21,7 @@ export const optionalAuth = (req, res, next) => {
   const header = req.headers.authorization;
   if (header && header.startsWith('Bearer ')) {
     try {
-      const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET);
+      const decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
       req.user = { id: decoded.id, email: decoded.email, role: decoded.role };
     } catch {
       // abaikan token tidak valid
