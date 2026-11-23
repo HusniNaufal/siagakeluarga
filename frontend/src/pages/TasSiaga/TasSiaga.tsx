@@ -1,147 +1,22 @@
 import { useState } from "react";
-import { Check, Trash2 } from "lucide-react";
-import {
-  useAddKitItem,
-  useDeleteKitItem,
-  useKit,
-  useUpdateKitItem,
-} from "@/hooks/useKit";
-import type { KitItem } from "@/lib/types";
+import { Check, Plus, Trash2 } from "lucide-react";
+import { useAddKitItem, useDeleteKitItem, useKit, useUpdateKitItem } from "@/hooks/useKit";
+import { cn } from "@/lib/utils";
 
-const GROUP_COLORS: Record<string, string> = {
-  "Khusus banjir": "#1D4ED8",
-  "Khusus longsor": "#A16207",
-  "Khusus gempa": "#B91C1C",
-  "Khusus cuaca ekstrem": "#0F766E",
-};
-
-const DEFAULT_GROUPS = [
-  {
-    title: "Khusus banjir",
-    color: "#1D4ED8",
-    items: [
-      {
-        id: "d-1",
-        nama_item: "Dokumen penting (KTP, KK) dalam plastik kedap air",
-        status: true,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-      {
-        id: "d-2",
-        nama_item: "Obat darah tinggi Nenek Aminah (7 hari)",
-        status: true,
-        tag: "untuk Nenek Aminah",
-        kadaluarsa: "12/2026",
-      },
-      {
-        id: "d-3",
-        nama_item: "Pakaian kering ganti dan pelampung anak",
-        status: false,
-        tag: "untuk Raka",
-        kadaluarsa: null,
-      },
-    ],
-  },
-  {
-    title: "Khusus longsor",
-    color: "#A16207",
-    items: [
-      {
-        id: "d-4",
-        nama_item: "Peluit darurat dan senter kepala",
-        status: true,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-      {
-        id: "d-5",
-        nama_item: "Sepatu bot karet dan sarung tangan kerja",
-        status: true,
-        tag: "untuk Budi",
-        kadaluarsa: null,
-      },
-      {
-        id: "d-6",
-        nama_item: "Masker debu N95 (1 kotak)",
-        status: false,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-    ],
-  },
-  {
-    title: "Khusus gempa",
-    color: "#B91C1C",
-    items: [
-      {
-        id: "d-7",
-        nama_item: "Kotak P3K lengkap dan perban gulung",
-        status: true,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-      {
-        id: "d-8",
-        nama_item: "Air minum kemasan (3 L/orang) dan biskuit energi",
-        status: true,
-        tag: "untuk semua",
-        kadaluarsa: "12/2026",
-      },
-      {
-        id: "d-9",
-        nama_item: "Powerbank 20.000 mAh dan radio baterai",
-        status: false,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-    ],
-  },
-  {
-    title: "Khusus cuaca ekstrem",
-    color: "#0F766E",
-    items: [
-      {
-        id: "d-10",
-        nama_item: "Jas hujan keluarga dan payung lipat",
-        status: true,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-      {
-        id: "d-11",
-        nama_item: "Lampu darurat LED isi ulang",
-        status: true,
-        tag: "untuk semua",
-        kadaluarsa: null,
-      },
-      {
-        id: "d-12",
-        nama_item: "Selimut hangat darurat",
-        status: false,
-        tag: "untuk Nenek Aminah",
-        kadaluarsa: null,
-      },
-    ],
-  },
+/** Saran awal yang umum untuk semua keluarga. Tidak menyebut nama atau kondisi siapa pun. */
+const SARAN_BARANG = [
+  "Dokumen penting dalam plastik kedap air",
+  "Obat rutin untuk 7 hari",
+  "Air minum dan makanan siap saji untuk 3 hari",
+  "Senter dan baterai cadangan",
+  "Peluit",
+  "Kotak P3K",
+  "Pakaian ganti yang kering",
+  "Powerbank dan radio kecil",
+  "Masker",
 ];
 
-function assignGroup(item: KitItem, index: number): string {
-  const n = item.nama_item.toLowerCase();
-  if (n.includes("dokumen") || n.includes("obat") || n.includes("pakaian"))
-    return "Khusus banjir";
-  if (n.includes("peluit") || n.includes("sepatu") || n.includes("masker"))
-    return "Khusus longsor";
-  if (n.includes("p3k") || n.includes("air") || n.includes("powerbank"))
-    return "Khusus gempa";
-  const titles = [
-    "Khusus banjir",
-    "Khusus longsor",
-    "Khusus gempa",
-    "Khusus cuaca ekstrem",
-  ];
-  return titles[index % titles.length];
-}
+const HARI = 24 * 60 * 60 * 1000;
 
 export function TasSiaga() {
   const { data, isLoading } = useKit();
@@ -157,267 +32,193 @@ export function TasSiaga() {
     return <div className="h-40 animate-pulse rounded-2xl bg-muted" />;
   }
 
+  const items = [...data.items].sort((a, b) => Number(a.status) - Number(b.status));
+  const total = data.kesiapan.total;
+  const siap = data.kesiapan.siap;
+  const pct = data.kesiapan.persentase;
+  const adaItem = items.length > 0;
+
+  const sudahAda = new Set(items.map((i) => i.nama_item.toLowerCase()));
+  const saranBelumAda = SARAN_BARANG.filter((s) => !sudahAda.has(s.toLowerCase()));
+  const hampirKadaluarsa = items.filter(
+    (i) => i.kadaluarsa && new Date(i.kadaluarsa).getTime() - Date.now() < 60 * HARI,
+  ).length;
+
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!nama.trim()) return;
-    await addItem.mutateAsync({
-      nama_item: nama.trim(),
-      kadaluarsa: kadaluarsa || null,
-    });
+    await addItem.mutateAsync({ nama_item: nama.trim(), kadaluarsa: kadaluarsa || null });
     setNama("");
     setKadaluarsa("");
     setShowAdd(false);
   }
 
-  const hasBackendItems = data.items.length > 0;
-  const siapCount = hasBackendItems ? data.kesiapan.siap : 8;
-  const totalCount = hasBackendItems ? data.kesiapan.total : 12;
-  const pct = hasBackendItems ? data.kesiapan.persentase : 67;
-  const belumCount = Math.max(0, totalCount - siapCount);
-
-  const groupedBackend = new Map<string, KitItem[]>();
-  data.items.forEach((item, idx) => {
-    const g = assignGroup(item, idx);
-    groupedBackend.set(g, [...(groupedBackend.get(g) ?? []), item]);
-  });
-
   return (
-    <div className="space-y-4">
-      {/* Head: Tas siaga + Cetak daftar + Tambah barang (persis siagakeluarga.fig Node 3021..3029) */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0F172A]">
-            Tas siaga
-          </h1>
-          <p className="mt-1 text-[16px] text-[#475569]">
-            {siapCount} dari {totalCount} barang sudah siap
+          <h1>Tas siaga</h1>
+          <p className="mt-1 text-[16px] text-ink-3">
+            {adaItem ? `${siap} dari ${total} barang sudah siap` : "Belum ada barang di daftar"}
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 print:hidden">
+          {adaItem && (
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="h-10 rounded-full border border-line bg-base px-4 text-[14px] font-semibold text-ink hover:bg-tint"
+            >
+              Cetak daftar
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => window.print()}
-            className="h-[40px] rounded-[8px] border border-[#CBD5E1] bg-white px-4 text-[13px] font-semibold text-[#0B2545]"
+            onClick={() => setShowAdd((v) => !v)}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent-dark px-4 text-[14px] font-semibold text-white hover:bg-accent-hover"
           >
-            Cetak daftar
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAdd(true)}
-            className="h-[40px] rounded-[8px] bg-[#C2410C] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#9A3412]"
-          >
-            + Tambah barang
+            <Plus className="size-4" aria-hidden="true" />
+            Tambah barang
           </button>
         </div>
       </div>
 
-      {/* Ringkasan Progres Tas Siaga (persis Node 3030..3035) */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-[#E2E8F0] bg-white px-6 py-[18px]">
-        <div className="flex flex-wrap items-center gap-4">
-          <p className="text-[15px] font-semibold text-[#0F172A]">
-            Kelengkapan {pct}% ({siapCount}/{totalCount} barang)
-          </p>
-          <div className="h-[10px] w-[220px] overflow-hidden rounded-[5px] bg-[#E2E8F0]">
-            <div
-              className="h-full rounded-[5px] bg-[#C2410C]"
-              style={{ width: `${pct}%` }}
+      {showAdd && (
+        <form onSubmit={onAdd} className="grid gap-3 rounded-2xl border border-line bg-base p-5 sm:grid-cols-[1fr_180px_auto] print:hidden">
+          <div>
+            <label htmlFor="kit-nama" className="block text-[14px] font-medium text-ink">
+              Nama barang
+            </label>
+            <input
+              id="kit-nama"
+              value={nama}
+              onChange={(e) => setNama(e.target.value)}
+              required
+              autoFocus
+              className="mt-1.5 h-11 w-full rounded-xl border border-line px-3.5 text-[15px] outline-none focus:border-ink"
             />
           </div>
-        </div>
-        <p className="text-[13px] text-[#475569]">
-          {belumCount} barang belum dicek &nbsp;|&nbsp; 2 obat kedaluwarsa
-          12/2026
-        </p>
-      </div>
+          <div>
+            <label htmlFor="kit-kadaluarsa" className="block text-[14px] font-medium text-ink">
+              Kedaluwarsa <span className="font-normal text-muted">(opsional)</span>
+            </label>
+            <input
+              id="kit-kadaluarsa"
+              type="date"
+              value={kadaluarsa}
+              onChange={(e) => setKadaluarsa(e.target.value)}
+              className="mt-1.5 h-11 w-full rounded-xl border border-line px-3.5 text-[15px] outline-none focus:border-ink"
+            />
+          </div>
+          <div className="flex items-end gap-2">
+            <button
+              type="submit"
+              disabled={addItem.isPending}
+              className="h-11 rounded-full bg-ink px-5 text-[14px] font-semibold text-white disabled:opacity-50"
+            >
+              Simpan
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAdd(false)}
+              className="h-11 rounded-full px-3 text-[14px] text-ink-3 hover:text-ink"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      )}
 
-      {/* Grup Barang (persis Node 3036, 3060, 3083, 3107) */}
-      {hasBackendItems ? (
-        <div className="space-y-4">
-          {Array.from(groupedBackend.entries()).map(([groupTitle, list]) => (
-            <div
-              key={groupTitle}
-              className="rounded-[20px] border border-[#E2E8F0] bg-white p-6"
-            >
-              <p
-                className="mb-3 text-[13px] font-normal"
-                style={{ color: GROUP_COLORS[groupTitle] ?? "#1D4ED8" }}
-              >
-                {groupTitle}
-              </p>
-              <div className="divide-y divide-[#E2E8F0]">
-                {list.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-3 py-4"
-                  >
-                    <label className="flex cursor-pointer items-center gap-3.5">
-                      <input
-                        type="checkbox"
-                        checked={item.status}
-                        onChange={(e) =>
-                          updateItem.mutate({
-                            id: item.id,
-                            status: e.target.checked,
-                          })
-                        }
-                        className="sr-only"
-                      />
-                      <span
-                        className={`flex size-[22px] shrink-0 items-center justify-center rounded-[6px] ${
-                          item.status
-                            ? "bg-[#C2410C] text-white"
-                            : "border-[1.5px] border-[#E2E8F0] bg-white"
-                        }`}
-                      >
-                        {item.status && <Check className="size-3.5 stroke-[3]" />}
-                      </span>
-                      <span className="text-[16px] text-[#0F172A]">
-                        {item.nama_item}
-                      </span>
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-[6px] bg-[#F4F1EA] px-2.5 py-1 text-[12px] text-[#475569]">
-                        untuk semua
-                      </span>
-                      {item.kadaluarsa && (
-                        <span className="text-[12px] text-[#DC2626]">
-                          kadaluwarsa{" "}
-                          {new Date(item.kadaluarsa).toLocaleDateString(
-                            "id-ID",
-                            {
-                              month: "2-digit",
-                              year: "numeric",
-                            },
-                          )}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => deleteItem.mutate(item.id)}
-                        className="text-[#475569] hover:text-[#DC2626]"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {DEFAULT_GROUPS.map((g) => (
-            <div
-              key={g.title}
-              className="rounded-[20px] border border-[#E2E8F0] bg-white p-6"
-            >
-              <p
-                className="mb-3 text-[13px] font-normal"
-                style={{ color: g.color }}
-              >
-                {g.title}
-              </p>
-              <div className="divide-y divide-[#E2E8F0]">
-                {g.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-3 py-4"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <span
-                        className={`flex size-[22px] shrink-0 items-center justify-center rounded-[6px] ${
-                          item.status
-                            ? "bg-[#C2410C] text-white"
-                            : "border-[1.5px] border-[#E2E8F0] bg-white"
-                        }`}
-                      >
-                        {item.status && <Check className="size-3.5 stroke-[3]" />}
-                      </span>
-                      <span className="text-[16px] text-[#0F172A]">
-                        {item.nama_item}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-[6px] bg-[#F4F1EA] px-2.5 py-1 text-[12px] text-[#475569]">
-                        {item.tag}
-                      </span>
-                      {item.kadaluarsa && (
-                        <span className="text-[12px] text-[#DC2626]">
-                          kadaluwarsa {item.kadaluarsa}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+      {adaItem && (
+        <div className="rounded-2xl border border-line bg-base p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[16px] font-semibold text-ink">Kelengkapan {pct}%</p>
+            {hampirKadaluarsa > 0 && (
+              <p className="text-[14px] text-waspada">{hampirKadaluarsa} barang kedaluwarsa dalam 60 hari</p>
+            )}
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Kelengkapan tas siaga"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={pct}
+            className="mt-3 h-2 w-full overflow-hidden rounded-full bg-line"
+          >
+            <div className="h-full rounded-full bg-accent-dark transition-[width] duration-500" style={{ width: `${pct}%` }} />
+          </div>
         </div>
       )}
 
-      {/* Modal Tambah Barang Tas Siaga (persis Node 3274) */}
-      {showAdd && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#07090C]/55 p-4"
-        >
-          <div className="w-full max-w-[480px] rounded-[24px] border border-[#E2E8F0] bg-white p-7 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[22px] font-bold text-[#0F172A]">
-                Tambah barang tas siaga
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowAdd(false)}
-                className="flex size-8 items-center justify-center rounded-[8px] bg-[#F1F5F9] text-lg font-bold text-[#475569]"
-              >
-                ×
-              </button>
-            </div>
-            <form onSubmit={onAdd} className="mt-5 space-y-4">
-              <div>
-                <label className="mb-1 block text-[13px] font-medium text-[#475569]">
-                  Nama barang
-                </label>
+      {adaItem && (
+        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-base">
+          {items.map((item) => (
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <label className="flex min-h-11 cursor-pointer items-center gap-3.5">
                 <input
-                  value={nama}
-                  onChange={(e) => setNama(e.target.value)}
-                  placeholder="Mis. Senter dan baterai cadangan"
-                  required
-                  className="h-11 w-full rounded-[12px] border border-[#CBD5E1] px-3.5 text-[14px] outline-none focus-visible:border-[#C2410C]"
+                  type="checkbox"
+                  checked={item.status}
+                  onChange={(e) => updateItem.mutate({ id: item.id, status: e.target.checked })}
+                  className="peer sr-only"
                 />
-              </div>
-              <div>
-                <label className="mb-1 block text-[13px] font-medium text-[#475569]">
-                  Tanggal kedaluwarsa (opsional)
-                </label>
-                <input
-                  type="date"
-                  value={kadaluarsa}
-                  onChange={(e) => setKadaluarsa(e.target.value)}
-                  className="h-11 w-full rounded-[12px] border border-[#CBD5E1] px-3.5 text-[14px] outline-none focus-visible:border-[#C2410C]"
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-md border transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent-dark",
+                    item.status ? "border-accent-dark bg-accent-dark text-white" : "border-line bg-base",
+                  )}
+                >
+                  {item.status && <Check className="size-4" strokeWidth={3} />}
+                </span>
+                <span className={cn("text-[16px]", item.status ? "text-muted line-through" : "text-ink")}>
+                  {item.nama_item}
+                </span>
+              </label>
+              <div className="flex items-center gap-4 print:hidden">
+                {item.kadaluarsa && (
+                  <span className="text-[13px] text-ink-3">
+                    Kedaluwarsa{" "}
+                    {new Date(item.kadaluarsa).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+                  </span>
+                )}
                 <button
                   type="button"
-                  onClick={() => setShowAdd(false)}
-                  className="h-11 rounded-[10px] border border-[#CBD5E1] bg-white px-5 text-[14px] font-semibold text-[#0B2545]"
+                  onClick={() => deleteItem.mutate(item.id)}
+                  aria-label={`Hapus ${item.nama_item}`}
+                  className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-tint hover:text-bahaya"
                 >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="h-11 rounded-[10px] bg-[#C2410C] px-6 text-[14px] font-semibold text-white"
-                >
-                  Simpan barang
+                  <Trash2 className="size-4" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {saranBelumAda.length > 0 && (
+        <section className="print:hidden">
+          <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+            {adaItem ? "Saran barang lain" : "Mulai dari daftar umum"}
+          </h2>
+          <p className="mt-1 text-[15px] text-ink-3">
+            Tekan untuk menambahkan. Sesuaikan dengan keluargamu, misalnya obat khusus atau perlengkapan bayi.
+          </p>
+          <ul className="mt-4 flex flex-wrap gap-2">
+            {saranBelumAda.map((s) => (
+              <li key={s}>
+                <button
+                  type="button"
+                  disabled={addItem.isPending}
+                  onClick={() => addItem.mutate({ nama_item: s, kadaluarsa: null })}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line bg-base px-4 text-[15px] text-ink hover:border-ink/40 hover:bg-tint disabled:opacity-50"
+                >
+                  <Plus className="size-4 text-muted" aria-hidden="true" />
+                  {s}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

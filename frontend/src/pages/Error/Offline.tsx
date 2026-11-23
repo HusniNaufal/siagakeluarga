@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { TopoBackground } from "@/components/layout/TopoBackground";
 
 export function Offline() {
   const [retrying, setRetrying] = useState(false);
@@ -15,8 +14,7 @@ export function Offline() {
 
   return (
     /* Error Koneksi (persis siagakeluarga.fig Node 4564) */
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#F4F1EA]">
-      <TopoBackground variant="warm" />
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#F1F5F9]">
 
       {/* Error Header (Node 4581) */}
       <header className="relative z-10 mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-between gap-3 px-6 pt-8 md:px-0">
@@ -60,10 +58,11 @@ export function Offline() {
           {/* Akses Luring (Node 4578) */}
           <div className="w-full rounded-[12px] border border-[#FDBA74] bg-[#FFF7ED] px-[18px] py-[14px] text-center">
             <p className="text-[13px] font-semibold text-[#9A3412]">
-              Rencana Darurat Tetap Tersedia Offline
+              Saat sinyal hilang
             </p>
             <p className="mt-1.5 text-[12px] text-[#475569]">
-              Buka salinan rencana Keluarga Pratama (Dayeuhkolot) &amp; daftar kontak BPBD tanpa internet.
+              Halaman ini belum bisa dibuka tanpa internet. Cetak atau simpan rencana sebagai PDF
+              sebelum bencana, dan simpan nomor darurat di ponselmu.
             </p>
           </div>
         </div>

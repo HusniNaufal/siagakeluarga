@@ -1,14 +1,21 @@
 import { useState } from "react";
 import { useHousehold } from "@/hooks/useHousehold";
-import { FASE_LABEL, type Fase } from "@/content/panduan";
+import { useRisk } from "@/hooks/useRisk";
+import { useGeneratePlan } from "@/hooks/usePlan";
+import { useKontakKeluarga, telHref } from "@/hooks/useKontak";
+import { useAuth } from "@/context/AuthContext";
+import { NOMOR_NASIONAL } from "@/content/kontak";
+import { EmptyIllustration } from "@/components/ui/EmptyIllustration";
+import { FASE_LABEL, findGuide, type Fase } from "@/content/panduan";
 import type { JenisBencana } from "@/lib/types";
 
 const SECTIONS = [
-  { id: "ringkasan", label: "Ringkasan risiko", active: true },
-  { id: "titik-kumpul", label: "Titik kumpul", active: false },
-  { id: "tugas", label: "Tugas tiap anggota", active: false },
-  { id: "kontak", label: "Kontak darurat", active: false },
-  { id: "catatan", label: "Catatan khusus", active: false },
+  { id: "ringkasan", label: "Ringkasan risiko" },
+  { id: "panduan", label: "Langkah per bencana" },
+  { id: "titik-kumpul", label: "Titik kumpul" },
+  { id: "tugas", label: "Tugas tiap anggota" },
+  { id: "kontak", label: "Kontak darurat" },
+  { id: "catatan", label: "Catatan khusus" },
 ];
 
 const SCENARIOS: { jenis: JenisBencana; label: string; activeBg: string }[] = [
@@ -28,8 +35,26 @@ function getInitials(name: string) {
     .join("");
 }
 
+function jarakLabel(km: number | null | undefined) {
+  if (km == null) return null;
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
 export function Rencana() {
+  const { user } = useAuth();
   const { data: household, isLoading } = useHousehold();
+  const generatePlan = useGeneratePlan();
+  const { kontak } = useKontakKeluarga();
+  const { data: risiko } = useRisk(
+    household?.region_id
+      ? {
+          region_id: household.region_id,
+          lat: household.lat ?? undefined,
+          lng: household.lng ?? undefined,
+        }
+      : undefined,
+    { enabled: Boolean(household?.region_id) },
+  );
 
   const [activeJenis, setActiveJenis] = useState<JenisBencana>("BANJIR");
   const [activeFase, setActiveFase] = useState<Fase>("sebelum");
@@ -44,6 +69,20 @@ export function Rencana() {
   const plan = household.emergency_plans?.[0];
   const konten = plan?.konten;
   const shareUrl = `${window.location.origin}/r/${household.share_token}`;
+  const namaKeluarga = user?.nama ?? "Keluarga";
+  const anggota = household.members ?? [];
+  const catatan = anggota.filter((m) => m.kebutuhan_khusus);
+  const titik = risiko?.titik_kumpul?.[0];
+  const cuaca = risiko?.cuaca;
+  const tugas = konten?.pembagian_tugas_keluarga ?? [];
+  const guide = findGuide(activeJenis);
+  const langkahPanduan = guide?.fase[activeFase];
+  const wilayahTeks = household.region
+    ? `Kec. ${household.region.kecamatan}, ${household.region.kab_kota}`
+    : null;
+  const petaHref = titik
+    ? `https://www.google.com/maps/search/?api=1&query=${titik.lat},${titik.lng}`
+    : null;
 
   async function copyShareLink() {
     await navigator.clipboard.writeText(shareUrl).catch(() => undefined);
@@ -51,13 +90,13 @@ export function Rencana() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const belumAdaRencana = !plan;
+
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_260px]">
-      {/* Dokumen Utama tanpa kartu pembungkus luar (persis siagakeluarga.fig Node 2444) */}
       <div className="space-y-4">
-        {/* Head: Rencana darurat + Bagikan + Unduh (Node 2445) */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0F172A]">
+          <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0B2545]">
             Rencana darurat
           </h1>
           <div className="flex flex-wrap gap-2.5 print:hidden">
@@ -73,208 +112,233 @@ export function Rencana() {
               onClick={() => setShowPdfModal(true)}
               className="h-[44px] rounded-[12px] border border-[#0B2545] bg-white px-5 text-[14px] font-semibold text-[#0B2545]"
             >
-              Unduh PDF
+              Cetak / simpan PDF
             </button>
           </div>
         </div>
 
-        {/* Tabs Skenario: Banjir, Gempa, Longsor (persis Node 2452) */}
-        <div className="flex flex-wrap gap-2 pt-2 print:hidden">
-          {SCENARIOS.map((s) => {
-            const active = activeJenis === s.jenis;
-            return (
-              <button
-                key={s.jenis}
-                type="button"
-                onClick={() => setActiveJenis(s.jenis)}
-                className={`h-[40px] rounded-full px-5 text-[14px] transition-colors ${
-                  active
-                    ? `${s.activeBg} font-semibold text-white`
-                    : "border border-[#E2E8F0] bg-white/80 font-medium text-[#475569] hover:bg-white"
-                }`}
-              >
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
+        {belumAdaRencana && (
+          <div className="rounded-[16px] border border-dashed border-[#CBD5E1] bg-white p-6 print:hidden">
+            <EmptyIllustration className="mx-0" />
+            <p className="text-[18px] font-semibold text-[#0B2545]">Rencana belum disusun</p>
+            <p className="mt-2 max-w-[56ch] text-[15px] leading-[1.6] text-[#475569]">
+              Rencana dibuat dari anggota keluarga dan wilayah rumahmu.{" "}
+              {anggota.length === 0
+                ? "Tambahkan anggota keluarga dulu di halaman Keluarga."
+                : "Tekan tombol di bawah untuk menyusunnya dengan AI. Prosesnya sekitar setengah menit."}
+            </p>
+            <button
+              type="button"
+              disabled={generatePlan.isPending || anggota.length === 0}
+              onClick={() => generatePlan.mutate()}
+              className="mt-4 h-[44px] rounded-[12px] bg-[#C2410C] px-5 text-[14px] font-semibold text-white hover:bg-[#9A3412] disabled:opacity-50"
+            >
+              {generatePlan.isPending ? "AI sedang menyusun…" : "Susun rencana dengan AI"}
+            </button>
+            {generatePlan.isError && (
+              <p role="alert" className="mt-3 text-[14px] text-[#B91C1C]">
+                {generatePlan.error instanceof Error
+                  ? generatePlan.error.message
+                  : "Rencana belum bisa disusun. Coba lagi."}
+              </p>
+            )}
+          </div>
+        )}
 
-        {/* Sub Tabs: Sebelum, Saat, Sesudah (persis Node 2459) */}
-        <div className="flex w-full max-w-[320px] gap-1.5 rounded-[12px] border border-[#E2E8F0] bg-white p-[5px] print:hidden">
-          {FASES.map((f) => {
-            const active = activeFase === f;
-            return (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setActiveFase(f)}
-                className={`flex-1 rounded-[8px] py-1.5 text-[13px] transition-colors ${
-                  active
-                    ? "bg-[#0B2545] font-semibold text-white"
-                    : "font-medium text-[#475569] hover:text-[#0F172A]"
-                }`}
-              >
-                {FASE_LABEL[f]}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Ringkasan Risiko (persis Node 2466) */}
         <section
           id="ringkasan"
           className="rounded-[14px] border border-[#E2E8F0] bg-white px-6 py-5"
         >
           <p className="text-[13px] text-[#9A3412]">Ringkasan risiko</p>
-          <p className="mt-1.5 text-[16px] leading-[1.45] text-[#0F172A]">
+          <p className="mt-1.5 text-[16px] leading-[1.45] text-[#0B2545]">
             {konten?.ringkasan_risiko ??
-              "Rumah berada 400 m dari bantaran sungai. Banjir dapat naik cepat saat hujan lebat lebih dari 2 jam."}
+              (wilayahTeks
+                ? `Wilayah rumahmu: ${wilayahTeks}. Ringkasan risiko muncul setelah rencana disusun.`
+                : "Wilayah rumah belum diisi. Lengkapi lokasi agar risiko bisa dihitung.")}
           </p>
         </section>
 
-        {/* Titik Kumpul (persis Node 2469) */}
+        {/* Langkah per bencana dan fase: panduan umum, bukan data pribadi. */}
+        <section id="panduan" className="space-y-3 pt-2">
+          <h2 className="text-[22px] font-bold text-[#0B2545]">Langkah per bencana</h2>
+          <div className="flex flex-wrap gap-2 print:hidden" role="tablist" aria-label="Jenis bencana">
+            {SCENARIOS.map((s) => {
+              const active = activeJenis === s.jenis;
+              return (
+                <button
+                  key={s.jenis}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveJenis(s.jenis)}
+                  className={`h-[40px] rounded-full px-5 text-[14px] transition-colors ${
+                    active
+                      ? `${s.activeBg} font-semibold text-white`
+                      : "border border-[#E2E8F0] bg-white/80 font-medium text-[#475569] hover:bg-white"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+          <div
+            className="flex w-full max-w-[320px] gap-1.5 rounded-[12px] border border-[#E2E8F0] bg-white p-[5px] print:hidden"
+            role="tablist"
+            aria-label="Fase"
+          >
+            {FASES.map((f) => {
+              const active = activeFase === f;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveFase(f)}
+                  className={`flex-1 rounded-[8px] py-1.5 text-[13px] transition-colors ${
+                    active
+                      ? "bg-[#0B2545] font-semibold text-white"
+                      : "font-medium text-[#475569] hover:text-[#0B2545]"
+                  }`}
+                >
+                  {FASE_LABEL[f]}
+                </button>
+              );
+            })}
+          </div>
+          {langkahPanduan && (
+            <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-5">
+              <p className="text-[15px] leading-[1.6] text-[#475569]">{langkahPanduan.ringkasan}</p>
+              <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-[15px] leading-[1.55] text-[#0B2545]">
+                {langkahPanduan.langkah.map((l) => (
+                  <li key={l}>{l}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </section>
+
         <section
           id="titik-kumpul"
-          className="flex flex-col gap-5 rounded-[20px] border border-[#E2E8F0] bg-white p-6 sm:flex-row sm:items-center"
+          className="rounded-[20px] border border-[#E2E8F0] bg-white p-6"
         >
-          <div className="relative h-[120px] w-full shrink-0 overflow-hidden rounded-[16px] sm:w-[160px]">
-            <img
-              src="/images/map-dayeuhkolot.webp"
-              alt="Peta titik kumpul"
-              className="h-full w-full object-cover"
-            />
-            <svg
-              viewBox="0 0 160 120"
-              className="absolute inset-0 h-full w-full"
-              fill="none"
-            >
-              <path
-                d="M28 96 L78 64 L126 32"
-                stroke="#C2410C"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <circle cx="122" cy="30" r="8" fill="#C2410C" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-[12px] text-[#475569]">Titik kumpul</p>
-            <p className="mt-1.5 text-[20px] font-bold text-[#0F172A]">
-              Aula Masjid Agung Dayeuhkolot
+          <p className="text-[12px] text-[#475569]">Titik kumpul</p>
+          {titik ? (
+            <>
+              <p className="mt-1.5 text-[20px] font-bold text-[#0B2545]">{titik.nama}</p>
+              <p className="mt-1.5 text-[16px] text-[#475569]">
+                {jarakLabel(titik.jarak_km)
+                  ? `${jarakLabel(titik.jarak_km)} dari rumah. `
+                  : ""}
+                {konten?.rute_dan_titik_kumpul ?? ""}
+              </p>
+              {petaHref && (
+                <a
+                  href={petaHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex h-10 items-center rounded-full border border-[#CBD5E1] px-4 text-[14px] font-semibold text-[#0B2545] hover:bg-[#F1F5F9] print:hidden"
+                >
+                  Buka di peta
+                </a>
+              )}
+            </>
+          ) : (
+            <p className="mt-1.5 text-[16px] leading-[1.55] text-[#475569]">
+              Belum ada titik kumpul untuk wilayah ini. Tanyakan ke RT/RW atau BPBD setempat, lalu
+              catat di rencana.
             </p>
-            <p className="mt-1.5 text-[16px] text-[#475569]">
-              {konten?.rute_dan_titik_kumpul ??
-                "400 meter, sekitar 5 menit berjalan kaki dari rumah"}
-            </p>
-          </div>
+          )}
         </section>
 
-        {/* Tugas Tiap Anggota (persis Node 2477..2494) */}
         <section id="tugas" className="space-y-3 pt-2">
-          <h2 className="text-[22px] font-bold text-[#0F172A]">
-            Tugas tiap anggota
-          </h2>
-          {(konten?.pembagian_tugas_keluarga?.length
-            ? konten.pembagian_tugas_keluarga
-            : [
-                {
-                  anggota: "Budi (Ayah)",
-                  tugas:
-                    "Membawa tas siaga dan dokumen penting ke titik kumpul",
-                },
-                {
-                  anggota: "Sari (Ibu)",
-                  tugas:
-                    "Mendampingi Raka dan memastikan obat Nenek Aminah terbawa",
-                },
-                {
-                  anggota: "Nenek Aminah",
-                  tugas:
-                    "Tetap bersama Sari, jalan perlahan menuju titik kumpul",
-                },
-              ]
-          ).map((t, i) => {
-            const name = t.anggota ?? `Anggota ${i + 1}`;
-            return (
-              <div
-                key={i}
-                className="flex items-center gap-4 rounded-[16px] border border-[#E2E8F0] bg-white p-5"
-              >
-                {i === 0 ? (
-                  <img
-                    src="/images/avatar-budi.webp"
-                    alt={name}
-                    className="size-11 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F4F1EA] text-[15px] text-[#0B2545]">
+          <h2 className="text-[22px] font-bold text-[#0B2545]">Tugas tiap anggota</h2>
+          {tugas.length === 0 ? (
+            <p className="rounded-[16px] border border-dashed border-[#CBD5E1] bg-white p-5 text-[15px] text-[#475569]">
+              Tugas dibuat saat rencana disusun.
+            </p>
+          ) : (
+            tugas.map((t, i) => {
+              const name = t.anggota ?? `Anggota ${i + 1}`;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 rounded-[16px] border border-[#E2E8F0] bg-white p-5"
+                >
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[15px] text-[#0B2545]">
                     {getInitials(name)}
                   </div>
-                )}
-                <div>
-                  <p className="text-[16px] font-bold text-[#0F172A]">{name}</p>
-                  <p className="mt-1 text-[16px] text-[#475569]">
-                    {t.tugas ?? t.peran}
-                  </p>
+                  <div>
+                    <p className="text-[16px] font-bold text-[#0B2545]">{name}</p>
+                    <p className="mt-1 text-[16px] text-[#475569]">{t.tugas ?? t.peran}</p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </section>
 
-        {/* Kontak Darurat (persis Node 2495..2501) */}
         <section id="kontak" className="space-y-3 pt-2">
-          <h2 className="text-[22px] font-bold text-[#0F172A]">
-            Kontak darurat
-          </h2>
-          <div className="flex items-center justify-between rounded-[16px] border border-[#E2E8F0] bg-white p-5">
-            <div>
-              <p className="text-[17px] font-semibold text-[#0F172A]">
-                BPBD Kab. Bandung
-              </p>
-              <p className="mt-1 text-[15px] text-[#475569]">(022) 589-2458</p>
-            </div>
-            <a
-              href="tel:0225892458"
-              className="flex size-[44px] items-center justify-center rounded-full bg-[#C2410C] text-[18px] text-white"
+          <h2 className="text-[22px] font-bold text-[#0B2545]">Kontak darurat</h2>
+          {[
+            ...NOMOR_NASIONAL.slice(0, 3).map((n) => ({ nama: n.nama, nomor: n.nomor, ket: n.untuk })),
+            ...kontak.map((k) => ({ nama: k.nama, nomor: k.nomor, ket: "Kontak keluargamu" })),
+          ].map((k) => (
+            <div
+              key={`${k.nama}-${k.nomor}`}
+              className="flex items-center justify-between rounded-[16px] border border-[#E2E8F0] bg-white p-5"
             >
-              ☎
-            </a>
-          </div>
+              <div>
+                <p className="text-[17px] font-semibold text-[#0B2545]">{k.nama}</p>
+                <p className="mt-1 text-[15px] text-[#475569]">
+                  {k.nomor} <span className="text-[13px]">· {k.ket}</span>
+                </p>
+              </div>
+              <a
+                href={telHref(k.nomor)}
+                aria-label={`Telepon ${k.nama} ${k.nomor}`}
+                className="flex size-[44px] shrink-0 items-center justify-center rounded-full bg-[#C2410C] text-[18px] text-white"
+              >
+                ☎
+              </a>
+            </div>
+          ))}
+          {kontak.length === 0 && (
+            <p className="text-[14px] leading-[1.6] text-[#475569] print:hidden">
+              Tambahkan nomor RT, puskesmas, dan BPBD setempat di halaman Keluarga. Nomor lokal berbeda
+              tiap daerah, jadi tidak diisi otomatis.
+            </p>
+          )}
         </section>
 
-        {/* Catatan Khusus (persis Node 2502..2505) */}
         <section id="catatan" className="space-y-3 pt-2">
-          <h2 className="text-[22px] font-semibold text-[#0F172A]">
-            Catatan khusus
-          </h2>
-          <div className="rounded-[20px] bg-[#F4F1EA] p-6">
-            <p className="text-[17px] font-semibold text-[#0F172A]">
-              Kebutuhan Nenek Aminah
+          <h2 className="text-[22px] font-semibold text-[#0B2545]">Catatan khusus</h2>
+          {catatan.length === 0 ? (
+            <p className="rounded-[20px] bg-[#F1F5F9] p-6 text-[15px] text-[#475569]">
+              Belum ada kebutuhan khusus. Isi di profil anggota yang membutuhkan obat rutin atau bantuan
+              berjalan.
             </p>
-            <p className="mt-2 text-[15px] leading-[1.45] text-[#475569]">
-              Obat darah tinggi harus selalu ada di tas siaga. Mobilitas
-              terbatas, perlu dibantu berjalan menuju titik kumpul. Dokter
-              keluarga: dr. Santi, (022) 701-4455.
-            </p>
-          </div>
+          ) : (
+            catatan.map((m) => (
+              <div key={m.id} className="rounded-[20px] bg-[#F1F5F9] p-6">
+                <p className="text-[17px] font-semibold text-[#0B2545]">Kebutuhan {m.panggilan}</p>
+                <p className="mt-2 text-[15px] leading-[1.45] text-[#475569]">{m.kebutuhan_khusus}</p>
+              </div>
+            ))
+          )}
         </section>
       </div>
 
-      {/* Kolom Kanan — Daftar Isi & Status Cuaca Saat Ini (persis Node 2506 & 2513) */}
       <aside className="hidden h-fit space-y-5 lg:block print:hidden">
-        <nav className="rounded-[14px] border border-[#E2E8F0] bg-white p-5">
+        <nav className="rounded-[14px] border border-[#E2E8F0] bg-white p-5" aria-label="Daftar isi">
           <p className="text-[12px] text-[#475569]">Daftar isi</p>
           <div className="mt-4 space-y-3">
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className={`block text-[14px] ${
-                  s.active
-                    ? "font-medium text-[#C2410C]"
-                    : "text-[#475569] hover:text-[#C2410C]"
-                }`}
+                className="block text-[14px] text-[#475569] hover:text-[#C2410C]"
               >
                 {s.label}
               </a>
@@ -283,15 +347,21 @@ export function Rencana() {
         </nav>
 
         <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-5">
-          <p className="text-[12px] font-semibold text-[#C2410C]">
-            Status Cuaca Saat Ini
-          </p>
-          <p className="mt-2 text-[20px] font-semibold text-[#0B2545]">
-            24°C, Hujan Lebat
-          </p>
-          <p className="mt-1.5 text-[13px] leading-[1.35] text-[#475569]">
-            Kel. Dayeuhkolot (Sumber BMKG). Pantau ketinggian air di teras.
-          </p>
+          <p className="text-[12px] font-semibold text-[#C2410C]">Cuaca saat ini</p>
+          {cuaca?.tersedia ? (
+            <>
+              <p className="mt-2 text-[20px] font-semibold text-[#0B2545]">
+                {cuaca.saat_ini.suhu_c}°C, {cuaca.saat_ini.cuaca}
+              </p>
+              <p className="mt-1.5 text-[13px] leading-[1.35] text-[#475569]">
+                {cuaca.lokasi ? `${cuaca.lokasi.desa}, ${cuaca.lokasi.kecamatan}` : wilayahTeks} · Sumber: BMKG
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 text-[14px] leading-[1.5] text-[#475569]">
+              {cuaca ? "Prakiraan BMKG belum bisa dimuat." : "Memuat cuaca…"}
+            </p>
+          )}
           <a
             href="tel:112"
             className="mt-4 block w-full rounded-[10px] bg-[#C2410C] py-2.5 text-center text-[13px] font-semibold text-white"
@@ -301,128 +371,100 @@ export function Rencana() {
         </div>
       </aside>
 
-      {/* Modal Preview Unduh PDF (persis siagakeluarga.fig Node 2627) */}
       {showPdfModal && (
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Pratinjau lembar darurat"
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B2545]/45 p-4 print:hidden"
         >
-          <div className="flex w-full max-w-[640px] flex-col gap-[18px] rounded-[18px] border border-[#E2E8F0] bg-white px-9 py-8 shadow-[0_20px_48px_rgba(11,37,69,0.16)]">
+          <div className="flex max-h-[92vh] w-full max-w-[640px] flex-col gap-[18px] overflow-y-auto rounded-[18px] border border-[#E2E8F0] bg-white px-9 py-8 shadow-[0_20px_48px_rgba(11,37,69,0.16)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-semibold text-[#0B2545]">
-                Preview Lembar Darurat (Siap Cetak A4)
-              </h2>
+              <h2 className="text-[20px] font-semibold text-[#0B2545]">Pratinjau lembar darurat (A4)</h2>
               <button
                 type="button"
                 onClick={() => setShowPdfModal(false)}
-                className="text-[20px] leading-none font-medium text-[#64748B] hover:text-[#0F172A]"
+                aria-label="Tutup"
+                className="text-[20px] leading-none font-medium text-[#64748B] hover:text-[#0B2545]"
               >
                 ×
               </button>
             </div>
 
-            {/* Preview Kertas A4 (Node 2631) */}
             <div className="overflow-hidden rounded-[4px] border border-[#CBD5E1] bg-white pb-[22px] shadow-[0_8px_24px_rgba(11,37,69,0.11)]">
-              <div className="flex h-12 items-center justify-between bg-[#0B2545] px-[22px]">
-                <p className="text-[16px] font-bold text-white">
-                  Rencana Darurat Keluarga Pratama
-                </p>
-                <span className="text-[12px] font-semibold text-[#93C5FD]">
-                  Skenario Banjir
-                </span>
+              <div className="flex min-h-12 items-center justify-between gap-3 bg-[#0B2545] px-[22px] py-2">
+                <p className="text-[16px] font-bold text-white">Rencana darurat {namaKeluarga}</p>
+                <span className="text-[12px] font-semibold text-[#93C5FD]">{guide?.label}</span>
               </div>
-
               <div className="mt-3 flex flex-col gap-2.5 px-[22px] pt-1.5">
                 <p className="text-[12px] text-[#475569]">
-                  Jl. Raya Dayeuhkolot No. 12, Kab. Bandung (Titik kumpul: Aula
-                  Masjid Agung, 400 m)
+                  {wilayahTeks ?? "Wilayah belum diisi"}
+                  {titik ? ` · Titik kumpul: ${titik.nama}${jarakLabel(titik.jarak_km) ? ` (${jarakLabel(titik.jarak_km)})` : ""}` : ""}
                 </p>
                 <div className="h-px w-full bg-[#E2E8F0]" />
-                <p className="text-[13px] font-semibold text-[#0F172A]">
-                  Pembagian Tugas Anggota Keluarga
-                </p>
-                <p className="text-[12px] leading-[20px] text-[#475569]">
-                  1. Budi (Ayah): Matikan MCB listrik, bawa tas siaga &amp;
-                  dokumen kedap air.
-                </p>
-                <p className="text-[12px] leading-[20px] text-[#475569]">
-                  2. Sari (Ibu): Dampingi Raka &amp; pastikan obat darah tinggi
-                  Nenek Aminah terbawa.
-                </p>
-                <p className="text-[12px] leading-[20px] text-[#475569]">
-                  3. Nenek Aminah: Evakuasi lebih dulu menuju Aula Masjid Agung
-                  via jalur datar.
-                </p>
+                <p className="text-[13px] font-semibold text-[#0B2545]">Pembagian tugas</p>
+                {tugas.length === 0 ? (
+                  <p className="text-[12px] text-[#475569]">Belum disusun.</p>
+                ) : (
+                  tugas.map((t, i) => (
+                    <p key={i} className="text-[12px] leading-[20px] text-[#475569]">
+                      {i + 1}. {t.anggota ?? `Anggota ${i + 1}`}: {t.tugas ?? t.peran}
+                    </p>
+                  ))
+                )}
                 <div className="h-px w-full bg-[#E2E8F0]" />
                 <p className="text-[12px] font-semibold text-[#9A3412]">
-                  Nomor Darurat: 112 (Nasional) | BPBD Kab. Bandung (022)
-                  589-2458 | Puskesmas (022) 589-1122
+                  Darurat: {NOMOR_NASIONAL[0].nomor} (nasional)
+                  {kontak.map((k) => ` | ${k.nama} ${k.nomor}`).join("")}
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[12px] font-medium text-[#64748B]">
-                Format: PDF A4 (1 halaman)
+                Di jendela cetak, pilih "Simpan sebagai PDF".
               </p>
-              <div className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPdfModal(false);
-                    setTimeout(() => window.print(), 150);
-                  }}
-                  className="h-11 rounded-[8px] border border-[#CBD5E1] bg-white px-[18px] text-[13px] font-semibold text-[#0B2545]"
-                >
-                  Cetak Langsung
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPdfModal(false);
-                    setTimeout(() => window.print(), 150);
-                  }}
-                  className="h-11 rounded-[8px] bg-[#C2410C] px-5 text-[13px] font-semibold text-white"
-                >
-                  Unduh PDF (120 KB)
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPdfModal(false);
+                  setTimeout(() => window.print(), 150);
+                }}
+                className="h-11 rounded-[8px] bg-[#C2410C] px-5 text-[13px] font-semibold text-white"
+              >
+                Cetak / simpan PDF
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Bagikan ke Keluarga (persis siagakeluarga.fig Node 2759) */}
       {showShareModal && (
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Bagikan rencana"
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B2545]/45 p-4 print:hidden"
         >
           <div className="flex w-full max-w-[540px] flex-col gap-[18px] rounded-[18px] border border-[#E2E8F0] bg-white px-9 py-8 shadow-[0_20px_48px_rgba(11,37,69,0.16)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-semibold text-[#0B2545]">
-                Bagikan Rencana Darurat Keluarga
-              </h2>
+              <h2 className="text-[20px] font-semibold text-[#0B2545]">Bagikan rencana darurat</h2>
               <button
                 type="button"
                 onClick={() => setShowShareModal(false)}
-                className="text-[20px] leading-none font-medium text-[#64748B] hover:text-[#0F172A]"
+                aria-label="Tutup"
+                className="text-[20px] leading-none font-medium text-[#64748B] hover:text-[#0B2545]"
               >
                 ×
               </button>
             </div>
 
             <p className="text-[13px] leading-[20px] text-[#475569]">
-              Anggota keluarga bisa membuka rencana ini langsung dari ponsel
-              tanpa perlu login (mode hanya baca).
+              Anggota keluarga bisa membuka rencana ini dari ponsel tanpa login (hanya baca).
             </p>
 
             <div className="flex h-[54px] items-center justify-between gap-2.5 rounded-[10px] border border-[#CBD5E1] bg-[#F8FAFC] py-2 pr-2 pl-4">
-              <span className="truncate text-[14px] font-medium text-[#0B2545]">
-                {shareUrl}
-              </span>
+              <span className="truncate text-[14px] font-medium text-[#0B2545]">{shareUrl}</span>
               <button
                 type="button"
                 onClick={copyShareLink}
@@ -432,25 +474,23 @@ export function Rencana() {
               </button>
             </div>
 
-            {/* Tanpa kotak bersarang abu-abu/krem — tipografi tampil langsung dan rapi (Node 2768) */}
             <div className="space-y-1.5 py-1">
-              <p className="text-[13px] font-semibold text-[#0B2545]">
-                Yang dapat dilihat penerima tautan:
-              </p>
+              <p className="text-[13px] font-semibold text-[#0B2545]">Yang dapat dilihat penerima tautan:</p>
               <p className="text-[12px] leading-[19px] text-[#475569]">
-                Titik kumpul Aula Masjid Agung Dayeuhkolot, pembagian tugas
-                anggota, catatan Nenek Aminah, dan tombol Telepon 112.
+                Nama dan peran anggota, kebutuhan khusus (misalnya obat rutin), titik kumpul, dan tombol
+                telepon 112. Siapa pun yang memegang tautan ini bisa membukanya, jadi kirim hanya ke
+                keluarga. Kalau tautan bocor, buat tautan baru lewat pengaturan keluarga.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Rencana Darurat Keluarga Pratama: ${shareUrl}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`Rencana darurat ${namaKeluarga}: ${shareUrl}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex h-11 flex-1 items-center justify-center rounded-[8px] bg-[#0F766E] px-5 text-[14px] font-semibold text-white"
               >
-                Kirim ke WhatsApp Keluarga
+                Kirim lewat WhatsApp
               </a>
               <button
                 type="button"

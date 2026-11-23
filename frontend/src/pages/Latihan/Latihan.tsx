@@ -1,447 +1,417 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Waves, Activity, Mountain, CloudLightning } from "lucide-react";
+import { Activity, Check, CloudLightning, Mountain, Waves, X } from "lucide-react";
 import { useGenerateQuiz } from "@/hooks/useQuiz";
 import { useCreateDrill, useDrills } from "@/hooks/useDrills";
+import { cn } from "@/lib/utils";
 import type { JenisBencana, QuizShape } from "@/lib/types";
 
-const SKENARIO: {
-  jenis: JenisBencana;
-  label: string;
-  color: string;
-  softBg: string;
-  image: string;
-  lastScore: string;
-  hasScore: boolean;
-  meta: string;
-  icon: typeof Waves;
-}[] = [
-  {
-    jenis: "BANJIR",
-    label: "Banjir malam hari",
-    color: "#1D4ED8",
-    softBg: "#EFF6FF",
-    image:
-      "https://images.unsplash.com/photo-1547683905-f686c993aae5?auto=format&fit=crop&w=600&q=80",
-    lastScore: "Skor terakhir: 80",
-    hasScore: true,
-    meta: "5 skenario, ±3 menit (Banjir)",
-    icon: Waves,
-  },
-  {
-    jenis: "GEMPA",
-    label: "Gempa saat di sekolah",
-    color: "#B91C1C",
-    softBg: "#FEF2F2",
-    image:
-      "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80",
-    lastScore: "Belum dicoba",
-    hasScore: false,
-    meta: "5 skenario, ±3 menit (Gempa)",
-    icon: Activity,
-  },
-  {
-    jenis: "LONGSOR",
-    label: "Longsor setelah hujan deras",
-    color: "#A16207",
-    softBg: "#FEFCE8",
-    image:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
-    lastScore: "Belum dicoba",
-    hasScore: false,
-    meta: "5 skenario, ±3 menit (Longsor)",
-    icon: Mountain,
-  },
-  {
-    jenis: "CUACA_EKSTREM",
-    label: "Cuaca ekstrem di jalan pulang",
-    color: "#0F766E",
-    softBg: "#F0FDFA",
-    image:
-      "https://images.unsplash.com/photo-1511289081-d06dda19034d?auto=format&fit=crop&w=600&q=80",
-    lastScore: "Belum dicoba",
-    hasScore: false,
-    meta: "5 skenario, ±3 menit (Cuaca ekstrem)",
-    icon: CloudLightning,
-  },
+const SKENARIO: { jenis: JenisBencana; label: string; deskripsi: string; icon: typeof Waves }[] = [
+  { jenis: "BANJIR", label: "Banjir malam hari", deskripsi: "Air mulai masuk saat semua orang tidur.", icon: Waves },
+  { jenis: "GEMPA", label: "Gempa bumi", deskripsi: "Guncangan kuat saat kamu berada di dalam rumah.", icon: Activity },
+  { jenis: "LONGSOR", label: "Longsor setelah hujan", deskripsi: "Tanda tanah bergerak di lereng dekat rumah.", icon: Mountain },
+  { jenis: "CUACA_EKSTREM", label: "Cuaca ekstrem", deskripsi: "Angin kencang dan petir saat di luar rumah.", icon: CloudLightning },
 ];
 
-const FALLBACK_QUIZ: QuizShape = {
-  jenis_bencana: "BANJIR",
-  soal: [
+const LABEL: Record<string, string> = Object.fromEntries(SKENARIO.map((s) => [s.jenis, s.label]));
+
+/**
+ * Soal bawaan, dipakai HANYA bila asisten AI tidak bisa dihubungi. Isinya langkah umum yang berlaku
+ * untuk siapa saja, tanpa nama atau kondisi keluarga tertentu. Tampilan selalu menyebut ini soal bawaan.
+ */
+const SOAL_BAWAAN: Partial<Record<JenisBencana, QuizShape["soal"]>> = {
+  BANJIR: [
     {
       id: 1,
-      pertanyaan:
-        "Air mulai masuk ke halaman rumah saat malam hari. Nenek Aminah sedang tidur.",
+      pertanyaan: "Air mulai masuk ke halaman rumah saat malam hari, dan ada anggota keluarga lansia yang sedang tidur.",
       pilihan: [
-        "Bangunkan Nenek Aminah dan bantu ke titik kumpul",
+        "Membangunkan semua anggota, membantu lansia, lalu bersiap menuju titik kumpul",
         "Menunggu air surut sambil memantau dari jendela",
-        "Membiarkan anggota keluarga berpencar sendiri",
+        "Membiarkan tiap orang mengurus dirinya sendiri",
         "Menyalakan semua alat elektronik di lantai bawah",
       ],
       jawaban_benar_index: 0,
-      penjelasan:
-        "Anggota lansia perlu waktu dan bantuan lebih untuk bergerak. Jangan tunggu air makin tinggi.",
+      penjelasan: "Lansia butuh waktu dan bantuan lebih untuk bergerak. Jangan menunggu air makin tinggi.",
     },
     {
       id: 2,
-      pertanyaan:
-        "Sebelum keluar meninggalkan rumah yang mulai tergenang, apa yang harus dilakukan Budi pada instalasi rumah?",
+      pertanyaan: "Rumah mulai tergenang dan kamu harus segera pergi. Apa yang dilakukan pada listrik?",
       pilihan: [
-        "Mematikan MCB listrik utama dan mencabut regulator gas",
-        "Membiarkan listrik tetap menyala agar lantai bawah terang",
-        "Membuka seluruh keran air di kamar mandi",
-        "Mengunci pintu dari luar tanpa membawa dokumen",
+        "Mematikan listrik utama jika aman dijangkau dengan tangan kering, lalu keluar",
+        "Membiarkan semuanya menyala agar lantai bawah tetap terang",
+        "Mencabut kabel sambil berdiri di dalam genangan",
+        "Menyiram panel listrik agar dingin",
       ],
       jawaban_benar_index: 0,
-      penjelasan:
-        "Mematikan MCB listrik utama mencegah risiko korsleting dan sengatan listrik saat air masuk ke dalam rumah.",
+      penjelasan: "Listrik dan air berbahaya jika bertemu. Matikan hanya bila aman, dan jangan menyentuh peralatan listrik di dalam air.",
+    },
+  ],
+  GEMPA: [
+    {
+      id: 1,
+      pertanyaan: "Guncangan kuat terasa saat kamu berada di dalam rumah. Apa yang dilakukan lebih dulu?",
+      pilihan: [
+        "Merunduk, berlindung di bawah meja kokoh, dan melindungi kepala",
+        "Berlari keluar secepat mungkin lewat tangga",
+        "Berdiri di bawah lampu gantung",
+        "Memakai lift untuk turun",
+      ],
+      jawaban_benar_index: 0,
+      penjelasan: "Saat guncangan, risiko terbesar adalah tertimpa benda jatuh. Lindungi kepala dan tetap di tempat sampai guncangan berhenti.",
+    },
+    {
+      id: 2,
+      pertanyaan: "Guncangan sudah berhenti. Apa langkah berikutnya?",
+      pilihan: [
+        "Memeriksa orang di sekitar, lalu keluar hati-hati lewat jalur aman menuju titik kumpul",
+        "Segera kembali tidur karena sudah aman",
+        "Menyalakan korek api untuk memeriksa kebocoran gas",
+        "Naik lift agar cepat sampai bawah",
+      ],
+      jawaban_benar_index: 0,
+      penjelasan: "Gempa susulan bisa terjadi. Keluar dengan hati-hati, hindari lift, dan jangan menyalakan api.",
+    },
+  ],
+  LONGSOR: [
+    {
+      id: 1,
+      pertanyaan: "Hujan deras berjam-jam. Kamu melihat retakan baru di tanah belakang rumah dan air keruh keluar dari lereng.",
+      pilihan: [
+        "Segera menjauh dari lereng ke tempat yang lebih aman dan melapor ke RT atau BPBD",
+        "Menutup retakan dengan tanah lalu tidur",
+        "Tetap di rumah karena belum ada yang runtuh",
+        "Berdiri di dekat lereng untuk memantau",
+      ],
+      jawaban_benar_index: 0,
+      penjelasan: "Retakan dan air keruh adalah tanda tanah bergerak. Menjauh lebih dulu, lalu laporkan.",
+    },
+    {
+      id: 2,
+      pertanyaan: "Longsor kecil sudah terjadi dan terlihat tenang. Bolehkah kembali mengambil barang?",
+      pilihan: [
+        "Tidak, tunggu petugas menyatakan aman karena longsor susulan bisa terjadi",
+        "Boleh, selama hujan sudah reda",
+        "Boleh, asal pergi sendirian",
+        "Boleh, lewat lereng supaya lebih cepat",
+      ],
+      jawaban_benar_index: 0,
+      penjelasan: "Longsor susulan sering terjadi setelah yang pertama. Tunggu arahan petugas.",
+    },
+  ],
+  CUACA_EKSTREM: [
+    {
+      id: 1,
+      pertanyaan: "Angin kencang dan petir terjadi saat kamu berada di luar rumah. Apa yang dilakukan?",
+      pilihan: [
+        "Masuk ke bangunan yang kokoh dan menjauhi pohon besar, tiang, dan baliho",
+        "Berteduh di bawah pohon tertinggi",
+        "Berdiri di tengah lapangan terbuka",
+        "Memegang tiang listrik agar tidak terbang",
+      ],
+      jawaban_benar_index: 0,
+      penjelasan: "Pohon tinggi, tiang, dan benda logam menarik petir dan bisa roboh. Cari bangunan kokoh.",
+    },
+    {
+      id: 2,
+      pertanyaan: "Sebuah pohon besar dekat rumah mulai miring setelah angin kencang. Apa yang dilakukan?",
+      pilihan: [
+        "Menjauhi area itu dan melapor ke RT atau petugas",
+        "Mengikat pohon dengan tali sendirian",
+        "Berteduh di bawahnya sampai hujan reda",
+        "Memanjatnya untuk memeriksa",
+      ],
+      jawaban_benar_index: 0,
+      penjelasan: "Pohon yang miring bisa tumbang kapan saja. Jauhi dan minta petugas menanganinya.",
     },
   ],
 };
 
-const REMINDER_KEY = "siagakeluarga.latihan-reminder";
+interface Jawab {
+  soalId: number;
+  pertanyaan: string;
+  pilihan: string[];
+  dipilih: number;
+  benarIndex: number;
+  penjelasan: string;
+}
 
 type ViewState =
   | { mode: "daftar" }
-  | {
-      mode: "main";
-      quiz: QuizShape;
-      soalIndex: number;
-      benar: number;
-      jawaban: number | null;
-    }
-  | { mode: "skor"; quiz: QuizShape; benar: number };
+  | { mode: "main"; jenis: JenisBencana; quiz: QuizShape; bawaan: boolean; i: number; dipilih: number | null; jawaban: Jawab[] }
+  | { mode: "skor"; jenis: JenisBencana; bawaan: boolean; jawaban: Jawab[] };
+
+const MINGGU = 7 * 24 * 60 * 60 * 1000;
 
 export function Latihan() {
   const [view, setView] = useState<ViewState>({ mode: "daftar" });
-  const [reminderOn, setReminderOn] = useState(
-    () => localStorage.getItem(REMINDER_KEY) !== "0",
-  );
+  const [pesan, setPesan] = useState<string | null>(null);
   const generateQuiz = useGenerateQuiz();
   const createDrill = useCreateDrill();
   const { data: drillsData } = useDrills();
 
-  function toggleReminder() {
-    const next = !reminderOn;
-    setReminderOn(next);
-    localStorage.setItem(REMINDER_KEY, next ? "1" : "0");
-  }
-
   async function mulai(jenis: JenisBencana) {
+    setPesan(null);
+    let quiz: QuizShape | null = null;
+    let bawaan = false;
     try {
-      const quiz = await generateQuiz.mutateAsync(jenis);
-      setView({ mode: "main", quiz, soalIndex: 0, benar: 0, jawaban: null });
+      quiz = await generateQuiz.mutateAsync(jenis);
     } catch {
-      setView({
-        mode: "main",
-        quiz: { ...FALLBACK_QUIZ, jenis_bencana: jenis },
-        soalIndex: 0,
-        benar: 0,
-        jawaban: null,
-      });
+      const soal = SOAL_BAWAAN[jenis];
+      if (soal) {
+        quiz = { jenis_bencana: jenis, soal };
+        bawaan = true;
+      }
     }
+    if (!quiz || quiz.soal.length === 0) {
+      setPesan("Latihan untuk skenario ini belum tersedia. Coba skenario lain.");
+      return;
+    }
+    setView({ mode: "main", jenis, quiz, bawaan, i: 0, dipilih: null, jawaban: [] });
   }
 
-  function pilihJawaban(index: number) {
-    if (view.mode !== "main" || view.jawaban !== null) return;
-    const soal = view.quiz.soal[view.soalIndex];
-    const benarBertambah = index === soal.jawaban_benar_index ? 1 : 0;
-    setView({ ...view, jawaban: index, benar: view.benar + benarBertambah });
+  function pilih(index: number) {
+    if (view.mode !== "main" || view.dipilih !== null) return;
+    const s = view.quiz.soal[view.i];
+    setView({
+      ...view,
+      dipilih: index,
+      jawaban: [
+        ...view.jawaban,
+        {
+          soalId: s.id,
+          pertanyaan: s.pertanyaan,
+          pilihan: s.pilihan,
+          dipilih: index,
+          benarIndex: s.jawaban_benar_index,
+          penjelasan: s.penjelasan,
+        },
+      ],
+    });
   }
 
   async function lanjut() {
     if (view.mode !== "main") return;
-    const next = view.soalIndex + 1;
-    if (next >= view.quiz.soal.length) {
-      const skor = Math.round((view.benar / view.quiz.soal.length) * 100);
-      await createDrill
-        .mutateAsync({ jadwal: new Date().toISOString(), skor })
-        .catch(() => undefined);
-      setView({ mode: "skor", quiz: view.quiz, benar: view.benar });
+    const berikut = view.i + 1;
+    if (berikut >= view.quiz.soal.length) {
+      const benar = view.jawaban.filter((j) => j.dipilih === j.benarIndex).length;
+      const skor = Math.round((benar / view.jawaban.length) * 100);
+      await createDrill.mutateAsync({ jadwal: new Date().toISOString(), skor }).catch(() => undefined);
+      setView({ mode: "skor", jenis: view.jenis, bawaan: view.bawaan, jawaban: view.jawaban });
     } else {
-      setView({ ...view, soalIndex: next, jawaban: null });
+      setView({ ...view, i: berikut, dipilih: null });
     }
   }
 
-  /* Tampilan 2: Latihan — Skenario (persis siagakeluarga.fig Node 3707..3746) */
+  /* ---------- Soal ---------- */
   if (view.mode === "main") {
-    const soal = view.quiz.soal[view.soalIndex];
+    const soal = view.quiz.soal[view.i];
     const total = view.quiz.soal.length;
-    const currentNum = view.soalIndex + 1;
+    const sudah = view.dipilih !== null;
+    const tepat = sudah && view.dipilih === soal.jawaban_benar_index;
+    const persen = Math.round(((view.i + (sudah ? 1 : 0)) / total) * 100);
 
     return (
-      <div className="mx-auto max-w-[740px] space-y-6">
-        {/* Top Nav Latihan (Node 3741) */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mx-auto max-w-[680px] space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setView({ mode: "daftar" })}
-            className="rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#0B2545]"
+            className="text-[15px] font-medium text-ink-3 hover:text-ink"
           >
-            ← Kembali ke Daftar Latihan
+            ← Keluar dari latihan
           </button>
-          <span className="text-[13px] text-[#475569]">
-            Banjir Malam Hari (Langkah {currentNum} dari {total})
+          <span className="text-[14px] text-muted">
+            {LABEL[view.jenis]} · soal {view.i + 1} dari {total}
           </span>
         </div>
 
-        {/* Card (persis Node 3726) */}
-        <div className="rounded-[20px] border border-[#E2E8F0] bg-white p-8 md:p-11">
-          <p className="text-[13px] text-[#475569]">
-            Skenario {currentNum} dari {total}
+        <div
+          role="progressbar"
+          aria-label="Kemajuan latihan"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={persen}
+          className="h-1.5 w-full overflow-hidden rounded-full bg-line"
+        >
+          <div className="h-full rounded-full bg-accent-dark transition-[width] duration-500" style={{ width: `${persen}%` }} />
+        </div>
+
+        {view.bawaan && (
+          <p className="rounded-xl border border-line bg-base px-4 py-3 text-[14px] leading-[1.5] text-ink-3">
+            Ini soal bawaan. Asisten AI belum bisa dihubungi, jadi soalnya bukan buatan AI.
           </p>
-          <p className="mt-3 text-[24px] leading-[1.35] font-semibold text-[#0F172A]">
-            {soal.pertanyaan}
-          </p>
-          <p className="mt-2.5 text-[17px] text-[#475569]">
-            Apa yang kamu lakukan lebih dulu?
-          </p>
+        )}
+
+        <div className="rounded-2xl border border-line bg-base p-6 md:p-9">
+          <p className="text-[22px] leading-[1.35] font-semibold tracking-[-0.015em] text-ink">{soal.pertanyaan}</p>
+          <p className="mt-2 text-[16px] text-ink-3">Apa yang kamu lakukan lebih dulu?</p>
 
           <div className="mt-6 space-y-3">
             {soal.pilihan.map((opsi, i) => {
-              const dipilih = view.jawaban === i;
+              const dipilih = view.dipilih === i;
               const benar = i === soal.jawaban_benar_index;
-              const sudahJawab = view.jawaban !== null;
               return (
                 <button
                   key={i}
                   type="button"
-                  disabled={sudahJawab}
-                  onClick={() => pilihJawaban(i)}
-                  className={`block w-full rounded-[14px] border p-5 text-left text-[16px] transition-colors ${
-                    sudahJawab && (benar || dipilih)
-                      ? "border-[1.5px] border-[#C2410C] bg-[#F4F1EA] font-medium text-[#9A3412]"
-                      : "border-[#E2E8F0] bg-white text-[#0F172A] hover:border-[#C2410C]"
-                  }`}
+                  disabled={sudah}
+                  onClick={() => pilih(i)}
+                  className={cn(
+                    "flex min-h-14 w-full items-start gap-3 rounded-2xl border p-4 text-left text-[16px] leading-[1.45] transition-colors",
+                    !sudah && "border-line bg-base text-ink hover:border-ink/50",
+                    sudah && benar && "border-aman bg-base text-ink",
+                    sudah && dipilih && !benar && "border-bahaya bg-base text-ink",
+                    sudah && !benar && !dipilih && "border-line bg-base text-muted",
+                  )}
                 >
-                  {opsi}
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center" aria-hidden="true">
+                    {sudah && benar && <Check className="size-5 text-aman" strokeWidth={2.4} />}
+                    {sudah && dipilih && !benar && <X className="size-5 text-bahaya" strokeWidth={2.4} />}
+                  </span>
+                  <span>{opsi}</span>
                 </button>
               );
             })}
           </div>
 
-          {view.jawaban !== null && (
-            <>
-              <div className="mt-6 rounded-[16px] bg-[#F4F1EA] p-5">
-                <p className="text-[16px] font-semibold text-[#C2410C]">
-                  ✓ Tepat
-                </p>
-                <p className="mt-1.5 text-[15px] leading-[1.45] text-[#475569]">
-                  {soal.penjelasan}
-                </p>
-              </div>
-
-              <div className="mt-6 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setView({ mode: "daftar" })}
-                  className="text-[14px] font-semibold text-[#475569] hover:text-[#0F172A]"
-                >
-                  Keluar dari latihan
-                </button>
-                <button
-                  type="button"
-                  onClick={lanjut}
-                  className="rounded-[10px] bg-[#C2410C] px-[22px] py-3 text-[14px] font-semibold text-white"
-                >
-                  {currentNum >= total
-                    ? "Lihat Skor →"
-                    : `Lanjut ke Skenario ${currentNum + 1} →`}
-                </button>
-              </div>
-            </>
+          {sudah && (
+            <div role="status" className="mt-6 rounded-2xl bg-surface p-5">
+              <p className={cn("text-[16px] font-semibold", tepat ? "text-aman" : "text-bahaya")}>
+                {tepat ? "Tepat" : "Kurang tepat"}
+              </p>
+              {!tepat && (
+                <p className="mt-1 text-[15px] text-ink">Jawaban yang tepat: {soal.pilihan[soal.jawaban_benar_index]}</p>
+              )}
+              <p className="mt-1.5 text-[15px] leading-[1.55] text-ink-3">{soal.penjelasan}</p>
+              <button
+                type="button"
+                onClick={lanjut}
+                disabled={createDrill.isPending}
+                className="mt-5 h-12 rounded-full bg-accent-dark px-6 text-[15px] font-semibold text-white hover:bg-accent-hover disabled:opacity-60"
+              >
+                {view.i + 1 >= total ? "Lihat hasil" : "Soal berikutnya"}
+              </button>
+            </div>
           )}
         </div>
       </div>
     );
   }
 
-  /* Tampilan 3: Latihan — Skor (persis siagakeluarga.fig Node 3748..3783) */
+  /* ---------- Hasil ---------- */
   if (view.mode === "skor") {
-    const skor = Math.round((view.benar / view.quiz.soal.length) * 100) || 80;
+    const benar = view.jawaban.filter((j) => j.dipilih === j.benarIndex).length;
+    const total = view.jawaban.length;
+    const skor = Math.round((benar / total) * 100);
     return (
-      <div className="mx-auto max-w-[740px] space-y-6">
-        {/* Top Nav Skor (Node 3780) */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mx-auto max-w-[680px] space-y-6">
+        <div className="rounded-2xl border border-line bg-base p-6 text-center md:p-9">
+          <p className="text-[15px] text-muted">{LABEL[view.jenis]}</p>
+          <p className="font-display mt-3 text-[80px] leading-none font-semibold tracking-[-0.04em] text-ink">{skor}</p>
+          <p className="mt-3 text-[17px] text-ink-3">
+            {benar} dari {total} jawaban tepat
+          </p>
+          {view.bawaan && <p className="mt-2 text-[13px] text-muted">Dari soal bawaan, bukan buatan AI.</p>}
+        </div>
+
+        <ul className="space-y-3">
+          {view.jawaban.map((j, n) => {
+            const tepat = j.dipilih === j.benarIndex;
+            return (
+              <li key={j.soalId} className="rounded-2xl border border-line bg-base p-5">
+                <p className="flex items-start gap-2 text-[16px] font-semibold text-ink">
+                  {tepat ? (
+                    <Check className="mt-0.5 size-5 shrink-0 text-aman" strokeWidth={2.4} aria-label="Tepat" />
+                  ) : (
+                    <X className="mt-0.5 size-5 shrink-0 text-bahaya" strokeWidth={2.4} aria-label="Kurang tepat" />
+                  )}
+                  <span>
+                    {n + 1}. {j.pertanyaan}
+                  </span>
+                </p>
+                {!tepat && (
+                  <p className="mt-2 pl-7 text-[15px] text-ink">Yang tepat: {j.pilihan[j.benarIndex]}</p>
+                )}
+                <p className="mt-1.5 pl-7 text-[14px] leading-[1.55] text-ink-3">{j.penjelasan}</p>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={() => setView({ mode: "daftar" })}
-            className="rounded-[10px] border border-[#E2E8F0] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#0B2545]"
+            className="h-12 flex-1 rounded-full bg-accent-dark text-[15px] font-semibold text-white hover:bg-accent-hover"
           >
-            ← Kembali ke Daftar Latihan
+            Coba skenario lain
           </button>
-          <span className="text-[13px] text-[#475569]">
-            Skenario Banjir Malam Hari (Selesai dalam 3 mnt 12 dtk)
-          </span>
-        </div>
-
-        {/* Card Skor (persis Node 3767) */}
-        <div className="rounded-[20px] border border-[#E2E8F0] bg-white p-8 text-center md:p-11">
-          <p className="text-[20px] font-semibold text-[#0F172A]">
-            Latihan selesai
-          </p>
-          <p className="mt-3 text-[80px] leading-none font-normal text-[#C2410C]">
-            {skor}
-          </p>
-          <p className="mt-3 text-[17px] text-[#475569]">
-            4 dari 5 keputusan tepat
-          </p>
-
-          <div className="mt-7 space-y-2.5 rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] px-[22px] py-[18px] text-left text-[13px]">
-            <p className="text-[14px] font-semibold text-[#0F172A]">
-              Ringkasan Evaluasi Keluarga Pratama
-            </p>
-            <p className="text-[#0F766E]">
-              ✓ Tepat: Mendahulukan evakuasi Nenek Aminah ke Aula Masjid Agung
-              Dayeuhkolot
-            </p>
-            <p className="text-[#0F766E]">
-              ✓ Tepat: Mematikan MCB listrik utama sebelum air mencapai teras
-              rumah
-            </p>
-            <p className="text-[#D97706]">
-              ! Perlu diingat: Letakkan tas siaga &amp; dokumen kedap air di
-              dekat pintu keluar
-            </p>
-          </div>
-
-          <div className="mt-7 space-y-3">
-            <button
-              type="button"
-              onClick={() => setView({ mode: "daftar" })}
-              className="flex h-[52px] w-full items-center justify-center rounded-full bg-[#C2410C] text-[15px] font-semibold text-white"
-            >
-              Coba skenario lain
-            </button>
-            <Link
-              to="/rencana"
-              className="flex h-[48px] w-full items-center justify-center rounded-[12px] border border-[#CBD5E1] bg-white text-[14px] font-semibold text-[#0B2545]"
-            >
-              Tinjau Rencana Darurat Keluarga
-            </Link>
-          </div>
+          <Link
+            to="/rencana"
+            className="flex h-12 flex-1 items-center justify-center rounded-full border border-line bg-base text-[15px] font-semibold text-ink hover:bg-tint"
+          >
+            Lihat rencana keluarga
+          </Link>
         </div>
       </div>
     );
   }
 
-  /* Tampilan 1: Latihan — Daftar Skenario (persis siagakeluarga.fig Node 3644..3705) */
-  return (
-    <div className="space-y-6">
-      <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0F172A]">
-        Latihan
-      </h1>
+  /* ---------- Daftar ---------- */
+  const drills = drillsData?.drills ?? [];
+  const mingguIni = drills.filter((d) => Date.now() - new Date(d.jadwal).getTime() < MINGGU).length;
 
-      {/* Grid Skenario (Node 3665) */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  return (
+    <div className="space-y-10">
+      <div>
+        <h1>Latihan</h1>
+        <p className="mt-1 max-w-[56ch] text-[16px] text-ink-3">
+          Pilih satu skenario. Setiap latihan berisi beberapa pertanyaan singkat tentang langkah pertama yang tepat.
+        </p>
+      </div>
+
+      <ul className="grid gap-3 sm:grid-cols-2">
         {SKENARIO.map((s) => {
           const Icon = s.icon;
           return (
-            <button
-              key={s.jenis}
-              type="button"
-              onClick={() => mulai(s.jenis)}
-              disabled={generateQuiz.isPending}
-              className="flex flex-col justify-between rounded-[16px] border border-[#E2E8F0] bg-white p-3.5 pb-[18px] text-left transition-transform hover:-translate-y-0.5 disabled:opacity-60"
-            >
-              <div>
-                <div
-                  className="group relative flex h-[112px] w-full items-center justify-center overflow-hidden rounded-[12px] border border-[#E2E8F0]"
-                  style={{ backgroundColor: s.softBg, color: s.color }}
-                >
-                  <img
-                    src={s.image}
-                    alt={s.label}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#07090C]/45 via-transparent to-transparent" />
-                  <span
-                    className="absolute bottom-2.5 left-2.5 flex size-8 items-center justify-center rounded-[8px] border border-white/60 bg-white/95 shadow-xs"
-                    style={{ color: s.color }}
-                  >
-                    <Icon className="size-4" strokeWidth={2.2} />
-                  </span>
-                </div>
-                <p
-                  className="mt-3.5 text-[18px] leading-[1.3] font-semibold"
-                  style={{ color: s.color }}
-                >
-                  {s.label}
-                </p>
-              </div>
-
-              <div className="mt-2.5 space-y-1">
-                <p
-                  className={`text-[13px] ${
-                    s.hasScore ? "text-[#C2410C]" : "text-[#475569]"
-                  }`}
-                >
-                  {s.lastScore}
-                </p>
-                <p className="text-[12px] text-[#475569]">{s.meta}</p>
-              </div>
-            </button>
+            <li key={s.jenis}>
+              <button
+                type="button"
+                onClick={() => mulai(s.jenis)}
+                disabled={generateQuiz.isPending}
+                className="flex w-full items-start gap-4 rounded-2xl border border-line bg-base p-5 text-left transition-colors hover:border-ink/40 disabled:opacity-60"
+              >
+                <Icon className="mt-0.5 size-6 shrink-0 text-ink-3" strokeWidth={1.5} aria-hidden="true" />
+                <span>
+                  <span className="block text-[18px] font-semibold tracking-[-0.01em] text-ink">{s.label}</span>
+                  <span className="mt-1 block text-[15px] leading-[1.5] text-ink-3">{s.deskripsi}</span>
+                </span>
+              </button>
+            </li>
           );
         })}
+      </ul>
+
+      <div role="status" aria-live="polite">
+        {generateQuiz.isPending && <p className="text-[15px] text-ink-3">Menyiapkan soal…</p>}
+        {pesan && <p className="text-[15px] text-bahaya">{pesan}</p>}
       </div>
 
-      {/* Ringkasan latihan (Node 3690 & 3691) */}
-      <div>
-        <h2 className="mb-3.5 text-[20px] font-semibold text-[#0F172A]">
-          Ringkasan latihan
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-5">
-            <p className="text-[13px] text-[#475569]">Total skenario dicoba</p>
-            <p className="mt-2 text-[32px] leading-none font-normal text-[#0F172A]">
-              {drillsData?.drills.length || 1}
-            </p>
-          </div>
-          <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-5">
-            <p className="text-[13px] text-[#475569]">Rata-rata skor</p>
-            <p className="mt-2 text-[32px] leading-none font-normal text-[#0F172A]">
-              {drillsData?.rata_rata_skor ?? 80}
-            </p>
-          </div>
-          <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-5">
-            <p className="text-[13px] text-[#475569]">Latihan minggu ini</p>
-            <p className="mt-2 text-[32px] leading-none font-normal text-[#0F172A]">
-              1
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Jadwal Pengingat (Node 3701) */}
-      <div className="flex items-center justify-between gap-4 rounded-[16px] border border-[#E2E8F0] bg-white px-6 py-5">
-        <div>
-          <p className="text-[16px] font-semibold text-[#0F172A]">
-            Jadwal pengingat latihan
-          </p>
-          <p className="mt-1 text-[14px] text-[#475569]">
-            Ingatkan keluarga berlatih skenario baru tiap 2 minggu.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={toggleReminder}
-          aria-pressed={reminderOn}
-          className={`h-7 w-[50px] shrink-0 rounded-full p-0.5 transition-colors ${
-            reminderOn ? "bg-[#C2410C]" : "bg-[#E2E8F0]"
-          }`}
-        >
-          <span
-            className={`block size-6 rounded-full bg-white transition-transform ${
-              reminderOn ? "translate-x-[22px]" : "translate-x-0"
-            }`}
-          />
-        </button>
-      </div>
+      <section>
+        <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Ringkasan latihan</h2>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          {[
+            ["Latihan dicoba", drills.length],
+            ["Rata-rata skor", drillsData?.rata_rata_skor != null ? Math.round(drillsData.rata_rata_skor) : "–"],
+            ["Minggu ini", mingguIni],
+          ].map(([label, nilai]) => (
+            <div key={label} className="rounded-2xl border border-line bg-base p-5">
+              <dt className="text-[14px] text-muted">{label}</dt>
+              <dd className="font-display mt-1 text-[34px] leading-none font-semibold tracking-[-0.03em] text-ink">{nilai}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </div>
   );
 }

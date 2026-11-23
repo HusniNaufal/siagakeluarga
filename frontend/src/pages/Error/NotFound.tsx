@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
-import { TopoBackground } from "@/components/layout/TopoBackground";
 
 export function NotFound() {
   return (
     /* 404 — Halaman Tidak Ditemukan (persis siagakeluarga.fig Node 4547) */
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#F4F1EA]">
-      <TopoBackground variant="warm" />
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#F1F5F9]">
 
       {/* Error Header (Node 4561) */}
       <header className="relative z-10 mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-between gap-3 px-6 pt-8 md:px-0">
@@ -16,7 +14,7 @@ export function NotFound() {
           SiagaKeluarga
         </Link>
         <p className="text-[13px] font-semibold text-[#9A3412]">
-          Darurat Nasional 112 | BPBD Kab. Bandung (022) 589-2458
+          Darurat Nasional 112
         </p>
       </header>
 

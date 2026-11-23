@@ -1,3 +1,4 @@
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Hero } from "@/components/sections/Hero";
 import { Stats } from "@/components/sections/Stats";
 import { CaraKerja } from "@/components/sections/CaraKerja";
@@ -9,7 +10,9 @@ import { Footer } from "@/components/sections/Footer";
 
 export function Beranda() {
   return (
-    <div>
+    <div className="min-h-svh bg-paper text-ink">
+      {/* Di luar Hero: Hero membuat lapisan tumpukan sendiri, jadi navbar di dalamnya bisa tertutup section di bawahnya. */}
+      <PublicNavbar placement="fixed" />
       <Hero />
       <Stats />
       <CaraKerja />

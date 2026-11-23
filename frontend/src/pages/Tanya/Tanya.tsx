@@ -19,101 +19,16 @@ interface Thread {
 
 const CHIPS = ["Isi tas siaga banjir", "Titik kumpul terdekat"];
 
-const DEFAULT_THREADS: Thread[] = [
-  {
-    id: "t-1",
-    title: "Kesiapsiagaan banjir",
-    timeLabel: "Hari ini, 14:02",
-    messages: [
-      {
-        id: "m-1",
-        role: "user",
-        text: "Kalau banjir datang malam hari dan ada nenek di rumah, apa yang harus dilakukan dulu?",
-      },
-      {
-        id: "m-2",
-        role: "ai",
-        text: "Bangunkan dan bantu Nenek Aminah terlebih dahulu karena butuh waktu lebih untuk bergerak. Sementara itu, anggota keluarga lain mematikan listrik utama dan mengambil tas siaga.",
-        referensi: [
-          {
-            id: 1,
-            sumber: "Sumber: Panduan BNPB (Evakuasi Banjir)",
-            similarity: 0.95,
-          },
-        ],
-      },
-      {
-        id: "m-3",
-        role: "user",
-        text: "Obat darah tinggi nenek harus dibawa berapa hari?",
-      },
-      {
-        id: "m-4",
-        role: "ai",
-        text: "Siapkan cadangan obat rutin minimal untuk 7 hari di dalam kantong kedap air, beserta catatan dosis dan nomor dokter keluarga.",
-        referensi: [
-          {
-            id: 2,
-            sumber: "Sumber: Panduan BNPB (Kelompok Rentan & Lansia)",
-            similarity: 0.92,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "t-2",
-    title: "Isi tas siaga untuk lansia",
-    timeLabel: "Kemarin, 09:15",
-    messages: [
-      {
-        id: "m-21",
-        role: "user",
-        text: "Isi tas siaga banjir",
-      },
-      {
-        id: "m-22",
-        role: "ai",
-        text: "Siapkan dokumen penting dalam plastik kedap air, obat rutin minimal 7 hari, pakaian ganti kering, senter, peluit, serta air minum dan makanan siap saji 72 jam.",
-        referensi: [
-          {
-            id: 3,
-            sumber: "Sumber: Panduan BNPB (Tas Siaga Keluarga)",
-            similarity: 0.94,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "t-3",
-    title: "Jalur evakuasi terdekat",
-    timeLabel: "3 hari lalu, 18:40",
-    messages: [
-      {
-        id: "m-31",
-        role: "user",
-        text: "Titik kumpul terdekat",
-      },
-      {
-        id: "m-32",
-        role: "ai",
-        text: "Titik kumpul terdekat adalah Aula Masjid Agung Dayeuhkolot, berjarak sekitar 400 meter (±5 menit berjalan kaki dari rumah).",
-        referensi: [
-          {
-            id: 4,
-            sumber: "Sumber: Data Titik Kumpul BPBD Kab. Bandung",
-            similarity: 0.91,
-          },
-        ],
-      },
-    ],
-  },
-];
+const NEW_THREAD: Thread = {
+  id: "t-baru",
+  title: "Percakapan baru",
+  timeLabel: "Sekarang",
+  messages: [],
+};
 
 export function Tanya() {
-  const [threads, setThreads] = useState<Thread[]>(DEFAULT_THREADS);
-  const [activeId, setActiveId] = useState<string>(DEFAULT_THREADS[0].id);
+  const [threads, setThreads] = useState<Thread[]>([NEW_THREAD]);
+  const [activeId, setActiveId] = useState<string>(NEW_THREAD.id);
   const [input, setInput] = useState("");
   const ask = useAsk();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -152,18 +67,15 @@ export function Tanya() {
             : t,
         ),
       );
-    } catch {
+    } catch (err) {
       const fallbackMsg: Message = {
         id: crypto.randomUUID(),
         role: "ai",
-        text: "Berdasarkan panduan resmi BNPB, matikan listrik utama sebelum evakuasi, bawa tas siaga 72 jam, dan prioritaskan pendampingan lansia menuju titik kumpul terdekat.",
-        referensi: [
-          {
-            id: 99,
-            sumber: "Sumber: Panduan Resmi BNPB",
-            similarity: 0.9,
-          },
-        ],
+        text: `${
+          err instanceof Error && err.message
+            ? err.message
+            : "Asisten belum bisa menjawab sekarang."
+        } Kalau keadaan darurat, hubungi 112 dan ikuti arahan petugas di tempat.`,
       };
       setThreads((prev) =>
         prev.map((t) =>
@@ -180,13 +92,19 @@ export function Tanya() {
     <div className="grid gap-7 lg:grid-cols-[1fr_240px]">
       {/* Chat Column (Node 3609) */}
       <div className="space-y-4">
-        <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0F172A]">
+        <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0B2545]">
           Tanya Siaga
         </h1>
 
         {/* Chat Panel (Node 3611) */}
         <div className="flex flex-col rounded-[20px] border border-[#E2E8F0] bg-white p-7">
           <div className="space-y-4">
+            {active.messages.length === 0 && (
+              <p className="text-[15px] leading-[1.6] text-[#475569]">
+                Tanyakan langkah yang perlu dilakukan sebelum, saat, atau sesudah bencana. Jawaban
+                disusun dari panduan dan bukan pengganti arahan BPBD atau petugas di tempatmu.
+              </p>
+            )}
             {active.messages.map((m) => (
               <div
                 key={m.id}
@@ -200,7 +118,7 @@ export function Tanya() {
                     "max-w-[540px] rounded-[16px] text-[15px] leading-[1.5]",
                     m.role === "user"
                       ? "bg-[#0B2545] px-4 py-3 text-white"
-                      : "bg-[#F4F1EA] px-[18px] py-4 text-[#0F172A]",
+                      : "bg-[#F1F5F9] px-[18px] py-4 text-[#0B2545]",
                   )}
                 >
                   <p className="whitespace-pre-wrap">{m.text}</p>
@@ -218,7 +136,7 @@ export function Tanya() {
             ))}
             {ask.isPending && (
               <div className="flex justify-start">
-                <div className="rounded-[16px] bg-[#F4F1EA] px-[18px] py-4 text-[15px] text-[#475569]">
+                <div className="rounded-[16px] bg-[#F1F5F9] px-[18px] py-4 text-[15px] text-[#475569]">
                   Tanya Siaga sedang mengetik...
                 </div>
               </div>
@@ -234,7 +152,7 @@ export function Tanya() {
               key={c}
               type="button"
               onClick={() => sendMessage(c)}
-              className="rounded-full border border-[#E2E8F0] bg-white px-4 py-2.5 text-[14px] text-[#475569] transition-colors hover:border-[#C2410C] hover:text-[#0F172A]"
+              className="rounded-full border border-[#E2E8F0] bg-white px-4 py-2.5 text-[14px] text-[#475569] transition-colors hover:border-[#C2410C] hover:text-[#0B2545]"
             >
               {c}
             </button>
@@ -253,7 +171,7 @@ export function Tanya() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Tanya apa saja soal kesiapsiagaan…"
-            className="h-full flex-1 bg-transparent text-[15px] text-[#0F172A] outline-none placeholder:text-[#475569]"
+            className="h-full flex-1 bg-transparent text-[15px] text-[#0B2545] outline-none placeholder:text-[#475569]"
           />
           <button
             type="submit"
@@ -273,7 +191,7 @@ export function Tanya() {
 
       {/* Riwayat Percakapan (persis Node 3632) */}
       <aside className="hidden h-fit rounded-[16px] border border-[#E2E8F0] bg-white p-5 lg:block">
-        <p className="text-[15px] font-semibold text-[#0F172A]">
+        <p className="text-[15px] font-semibold text-[#0B2545]">
           Riwayat percakapan
         </p>
         <div className="mt-3.5 space-y-2.5">
@@ -286,14 +204,14 @@ export function Tanya() {
                 onClick={() => setActiveId(t.id)}
                 className={cn(
                   "block w-full rounded-[12px] p-3 text-left transition-colors",
-                  isActive ? "bg-[#F4F1EA]" : "hover:bg-[#F8FAFC]",
+                  isActive ? "bg-[#F1F5F9]" : "hover:bg-[#F8FAFC]",
                 )}
               >
                 <p
                   className={cn(
                     "truncate text-[13px]",
                     isActive
-                      ? "font-semibold text-[#0F172A]"
+                      ? "font-semibold text-[#0B2545]"
                       : "font-normal text-[#475569]",
                   )}
                 >

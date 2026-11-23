@@ -1,45 +1,48 @@
 import { Link } from "react-router-dom";
-import { Reveal } from "@/components/motion/Reveal";
-import { TopoBackground } from "@/components/layout/TopoBackground";
+import { ArrowRight } from "lucide-react";
+import { ParallaxImage } from "@/components/motion/ParallaxImage";
+
+const LANGKAH = ["Daftarkan anggota rumah", "Cek titik kumpul dan tugasnya", "Kirim tautan ke grup keluarga"];
 
 export function Penutup() {
   return (
-    <section className="relative overflow-hidden bg-[#F4F1EA] px-6 py-24 text-center md:px-[100px] md:py-40">
-      <TopoBackground variant="warm" />
+    <section className="bg-base py-20 md:py-28">
+      <div className="shell">
+        <div className="grid overflow-hidden rounded-[32px] bg-ink text-white lg:grid-cols-[0.9fr_1.1fr]">
+          <ParallaxImage
+            src="/images/rumah-bandung-barat.webp"
+            alt="Rumah sederhana di tengah sawah saat fajar, Bandung Barat"
+            className="h-[280px] lg:h-auto lg:min-h-[460px]"
+            imgClassName="object-[50%_60%]"
+          />
+          <div className="px-6 py-10 md:px-12 md:py-14">
+            <h2 className="t-h2">
+              Susun rencanamu selagi rumah masih kering.
+            </h2>
+            <p className="mt-4 max-w-[46ch] t-lead text-white/75">
+              Gratis untuk rencana dasar. Titik kumpul usulan bisa kamu ubah kalau tidak cocok dengan keadaan gang di
+              rumah.
+            </p>
 
-      {/* Aksen bintang sudut sesuai siagakeluarga.fig Node 864 & 865 */}
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 28 28"
-        className="pointer-events-none absolute top-20 left-20 hidden size-7 text-[#C2410C] md:block"
-      >
-        <path
-          d="M14 0L16.8 11.2L28 14L16.8 16.8L14 28L11.2 16.8L0 14L11.2 11.2L14 0Z"
-          fill="currentColor"
-        />
-      </svg>
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        className="pointer-events-none absolute right-24 bottom-20 hidden size-6 text-[#C2410C] md:block"
-      >
-        <path
-          d="M12 0L14.4 9.6L24 12L14.4 14.4L12 24L9.6 14.4L0 12L9.6 9.6L12 0Z"
-          fill="currentColor"
-        />
-      </svg>
+            <ol className="mt-7 space-y-2 text-[16px] text-white/90">
+              {LANGKAH.map((l, i) => (
+                <li key={l} className="flex items-baseline gap-3">
+                  <span className="font-display tabular-nums text-[15px] font-semibold text-[#ffb591]">{i + 1}</span>
+                  {l}
+                </li>
+              ))}
+            </ol>
 
-      <Reveal className="relative z-10 mx-auto max-w-4xl">
-        <h2 className="text-4xl font-extrabold tracking-[-0.03em] text-[#0B2545] md:text-[64px] md:leading-[1.05]">
-          Buat rencanamu <span className="text-[#C2410C]">sebelum</span> butuh.
-        </h2>
-        <Link
-          to="/daftar"
-          className="mt-8 inline-flex h-[56px] items-center justify-center rounded-full bg-[#C2410C] px-7 text-[17px] font-semibold text-white transition-transform duration-150 hover:scale-[1.02] hover:bg-[#9A3412]"
-        >
-          Buat rencana keluargamu
-        </Link>
-      </Reveal>
+            <Link
+              to="/daftar"
+              className="group mt-9 inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-8 text-[17px] font-semibold text-ink"
+            >
+              Buat rencana keluarga
+              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

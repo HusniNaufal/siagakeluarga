@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/api";
+import { Logo } from "@/components/brand/Logo";
+import { GrafisRumah } from "@/components/ui/Grafis";
 import { AuthPhotoPanel } from "@/components/sections/AuthPhotoPanel";
-import { TopoBackground } from "@/components/layout/TopoBackground";
 
 export function Daftar() {
   const { register } = useAuth();
@@ -33,14 +34,11 @@ export function Daftar() {
   return (
     <div className="flex min-h-screen bg-white">
       <div className="relative flex w-full flex-col justify-center overflow-hidden px-6 py-16 lg:w-auto lg:min-w-[640px] lg:px-[100px]">
-        <TopoBackground variant="light" />
+        <GrafisRumah className="absolute bottom-8 left-[100px] hidden w-[220px] xl:[@media(min-height:840px)]:block" />
 
         <div className="relative z-10">
-          <Link
-            to="/"
-            className="text-xl font-semibold tracking-[-0.01em] text-[#0B2545]"
-          >
-            SiagaKeluarga
+          <Link to="/" aria-label="SiagaKeluarga, beranda" className="inline-block">
+            <Logo />
           </Link>
 
           <form onSubmit={onSubmit} className="mt-12 w-full max-w-[440px] space-y-7">
@@ -65,7 +63,7 @@ export function Daftar() {
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
                 className="h-[52px] w-full rounded-xl border border-line bg-white px-4 text-base outline-none focus-visible:border-accent-dark"
-                placeholder="Budi"
+                placeholder="Nama lengkapmu"
               />
             </div>
 

@@ -1,116 +1,58 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { useInView, useReducedMotion } from "motion/react";
-import { Reveal } from "@/components/motion/Reveal";
-import { TopoBackground } from "@/components/layout/TopoBackground";
-
-function CountUpStat({ target = 5402 }: { target?: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-10% 0px" });
-  const reduce = useReducedMotion();
-  const [val, setVal] = useState(reduce ? target : 0);
-
-  useEffect(() => {
-    if (!inView || reduce) return;
-    const duration = 1200;
-    const start = performance.now();
-    let frame = 0;
-
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - progress, 4);
-      setVal(Math.round(eased * target));
-      if (progress < 1) {
-        frame = requestAnimationFrame(tick);
-      }
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [inView, reduce, target]);
-
-  return (
-    <span ref={ref} className="tabular-nums">
-      {(reduce ? target : val).toLocaleString("id-ID")}
-    </span>
-  );
-}
+import { Clock3, ListChecks } from "lucide-react";
+import { motion } from "motion/react";
+import { useReveal } from "@/components/motion/Reveal";
+import { ParallaxImage } from "@/components/motion/ParallaxImage";
 
 export function Stats() {
+  const reveal = useReveal();
   return (
-    <section className="relative overflow-hidden bg-[#F4F1EA] px-6 py-24 md:px-[100px] md:py-40">
-      <TopoBackground variant="warm" />
-
-      <div className="relative z-10 mx-auto flex max-w-[1240px] flex-col gap-16 lg:flex-row lg:items-center lg:justify-between">
-        {/* Kolom Kiri — Angka 5.402 BNPB (persis siagakeluarga.fig Node 650..656) */}
-        <Reveal className="max-w-[380px] space-y-3">
-          <p className="text-[13px] tracking-[0.04em] text-[#475569]">
-            Sumber: BNPB
-          </p>
-          <p className="text-6xl font-extrabold tracking-[-0.04em] text-[#0F172A] md:text-[96px] md:leading-[1.02]">
-            <CountUpStat target={5402} />
-          </p>
-          <p className="text-[16px] leading-[1.6] text-[#475569]">
-            kejadian bencana hidrometeorologi tercatat sepanjang 2025 di
-            Indonesia
-          </p>
-          <div className="mt-3 rounded-[12px] border border-[#E2E8F0] bg-white px-4 py-3.5">
-            <p className="text-[12px] font-semibold text-[#0B2545]">
-              Rincian Kejadian Utama (BNPB 2025)
-            </p>
-            <p className="mt-2 text-[12px] text-[#475569]">
-              3.120 Banjir, 1.280 Cuaca ekstrem, 710 Tanah longsor
-            </p>
-          </div>
-        </Reveal>
-
-        {/* Kolom Tengah — Tumpukan 2 Foto + Lencana Centang Oranye (persis Node 657..661) */}
-        <Reveal
-          delay={0.08}
-          className="relative mx-auto h-[320px] w-full max-w-[420px] shrink-0 lg:mx-0"
-        >
-          <div className="group absolute top-10 left-0 h-[280px] w-[280px] overflow-hidden rounded-[24px] bg-[#E8E2D4] sm:w-[300px]">
-            <img
-              src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=800&q=80"
-              alt="Keluarga menyiapkan tas siaga"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              onError={(e) => {
-                e.currentTarget.src = "/images/stats-tas-siaga.webp";
-              }}
-            />
-          </div>
-          <div className="group absolute top-0 right-0 h-[190px] w-[235px] overflow-hidden rounded-[24px] bg-[#0B2545] sm:left-[160px] sm:w-[260px]">
-            <img
-              src="https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80"
-              alt="Titik kumpul keluarga"
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              onError={(e) => {
-                e.currentTarget.src = "/images/stats-titik-kumpul.webp";
-              }}
-            />
-          </div>
-          <div className="absolute top-[148px] left-[112px] flex size-[76px] items-center justify-center rounded-full border-[3px] border-white bg-[#C2410C] text-[28px] font-bold text-white">
-            ✓
-          </div>
-        </Reveal>
-
-        {/* Kolom Kanan — Ajakan Buat Rencana (persis Node 662..666) */}
-        <Reveal delay={0.14} className="max-w-[380px] space-y-3.5">
-          <h2 className="text-[28px] leading-[1.2] font-semibold tracking-[-0.015em] text-[#0F172A]">
-            Banyak keluarga belum punya rencana tertulis
+    <section className="bg-paper py-20 md:py-28">
+      <div className="shell">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16">
+          <h2 className="t-h2 text-ink">
+            Banyak keluarga baru berunding saat air sudah masuk rumah.
           </h2>
-          <p className="text-[16px] leading-[1.6] text-[#475569]">
-            Tanpa titik kumpul dan tugas yang jelas, keluarga mudah panik saat
-            bencana datang.
+          <p className="max-w-[48ch] t-lead text-ink-3">
+            Putuskan sekarang, saat masih tenang: ke mana pergi, siapa membawa apa, dan siapa dijemput lebih dulu.
           </p>
-          <div className="pt-0.5">
-            <Link
-              to="/daftar"
-              className="inline-flex h-[48px] items-center justify-center rounded-full bg-[#C2410C] px-6 text-[15px] font-semibold text-white transition-transform duration-150 hover:scale-[1.02] hover:bg-[#9A3412]"
-            >
-              Buat rencana sekarang
-            </Link>
+        </div>
+
+        <div className="mt-12 grid gap-4 lg:grid-cols-12">
+          <motion.article {...reveal(0)} className="relative min-h-[300px] overflow-hidden rounded-[24px] lg:col-span-7 lg:min-h-[360px]">
+            <ParallaxImage
+              src="/images/banjir-jakarta.webp"
+              alt="Jalan permukiman di Jakarta Selatan terendam banjir setinggi dada, seorang warga berdiri di tengahnya"
+              className="absolute inset-0"
+              imgClassName="object-[50%_35%]"
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-night/80 to-transparent p-6 pt-20">
+              <p className="max-w-[40ch] text-[16px] leading-[1.45] font-medium text-white">
+                Rawa Jati, Jakarta Selatan, Maret 2025. Saat air sudah di jalan, waktu untuk berunding sudah habis.
+              </p>
+            </div>
+          </motion.article>
+
+          <div className="grid gap-4 lg:col-span-5">
+            <motion.article {...reveal(1)} className="flex flex-col justify-between rounded-[24px] bg-accent-dark p-7 text-white">
+              <ListChecks className="size-6" strokeWidth={1.6} aria-hidden="true" />
+              <div className="mt-10">
+                <p className="font-display text-[64px] leading-none font-semibold tracking-[-0.04em]">4</p>
+                <p className="mt-3 max-w-[34ch] text-[16px] leading-[1.5] text-white/90">
+                  hal yang ditulis di rencana: titik kumpul, tugas tiap anggota, kontak darurat, dan isi tas siaga.
+                </p>
+              </div>
+            </motion.article>
+            <motion.article {...reveal(2)} className="flex flex-col justify-between rounded-[24px] bg-storm p-7 text-white">
+              <Clock3 className="size-6 text-mist" strokeWidth={1.6} aria-hidden="true" />
+              <div className="mt-10">
+                <p className="font-display text-[64px] leading-none font-semibold tracking-[-0.04em]">3 hari</p>
+                <p className="mt-3 max-w-[34ch] text-[16px] leading-[1.5] text-mist">
+                  prakiraan BMKG untuk kelurahan rumahmu, per 3 jam.
+                </p>
+              </div>
+            </motion.article>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

@@ -5,8 +5,8 @@ const ITEMS = [
   { label: "Gempa", color: "#FCA5A5" },
   { label: "Longsor", color: "#A16207" },
   { label: "Cuaca Ekstrem", color: "#5EEAD4" },
-  { label: "Tas Siaga", color: "#F5F5F4" },
-  { label: "Titik Kumpul", color: "#F5F5F4" },
+  { label: "Tas Siaga", color: "#F1F5F9" },
+  { label: "Titik Kumpul", color: "#F1F5F9" },
 ];
 
 function Row() {

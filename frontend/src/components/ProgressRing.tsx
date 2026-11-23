@@ -32,7 +32,7 @@ export function ProgressRing({ value, size = 80 }: { value: number; size?: numbe
         textAnchor="middle"
         dominantBaseline="middle"
         transform={`rotate(90 ${size / 2} ${size / 2})`}
-        className="fill-[#0F172A] font-sans font-normal tabular-nums"
+        className="fill-[#0B2545] font-sans font-normal tabular-nums"
         style={{ fontSize: Math.round(size * 0.28) }}
       >
         {Math.round(clamped)}

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import { FASE_LABEL, findGuide, type Fase } from "@/content/panduan";
-import { TopoBackground } from "@/components/layout/TopoBackground";
 
 const FASES: Fase[] = ["sebelum", "saat", "sesudah"];
 
@@ -30,19 +29,18 @@ export function PanduanDetail() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-white px-6 pt-28 pb-24 md:px-[100px]">
-      <TopoBackground variant="light" />
 
       <div className="relative z-10 mx-auto max-w-[1240px]">
         {/* Back link (Node 1347) */}
         <Link
           to="/panduan"
-          className="inline-block text-[14px] font-medium text-[#475569] hover:text-[#0F172A]"
+          className="inline-block text-[14px] font-medium text-[#475569] hover:text-[#0B2545]"
         >
           ← Panduan bencana
         </Link>
 
         {/* Judul Header Card (persis siagakeluarga.fig Node 1362) */}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-[#F4F1EA] px-7 py-6">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-[#F1F5F9] px-7 py-6">
           <div>
             <h1
               className="text-[40px] leading-[1.1] font-bold tracking-[-0.02em] md:text-[56px]"
@@ -71,7 +69,7 @@ export function PanduanDetail() {
               className={`flex-1 rounded-[7px] py-1.5 text-[17px] transition-colors ${
                 fase === f
                   ? "bg-[#0B2545] font-semibold text-white"
-                  : "font-medium text-[#475569] hover:text-[#0F172A]"
+                  : "font-medium text-[#475569] hover:text-[#0B2545]"
               }`}
             >
               {FASE_LABEL[f]}
@@ -91,7 +89,7 @@ export function PanduanDetail() {
                 <span className="text-[20px] font-normal text-[#C2410C]">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <p className="text-[17px] leading-[1.5] text-[#0F172A]">
+                <p className="text-[17px] leading-[1.5] text-[#0B2545]">
                   {step}
                 </p>
               </div>
@@ -111,15 +109,15 @@ export function PanduanDetail() {
           {/* Kolom Kanan: Kotak Yang Perlu Disiapkan & Kartu Bantuan (Node 1327..1341) */}
           <div className="space-y-6">
             {/* Kotak Yang Perlu Disiapkan (Node 1327) */}
-            <div className="rounded-[20px] border border-[#E2E8F0] bg-[#F4F1EA] p-7">
-              <p className="text-[19px] font-semibold text-[#0F172A]">
+            <div className="rounded-[20px] border border-[#E2E8F0] bg-[#F1F5F9] p-7">
+              <p className="text-[19px] font-semibold text-[#0B2545]">
                 Yang perlu disiapkan
               </p>
               <ul className="mt-4 space-y-4">
                 {content.checklist.map((item) => (
                   <li
                     key={item}
-                    className="flex items-center gap-3 text-[15px] text-[#0F172A]"
+                    className="flex items-center gap-3 text-[15px] text-[#0B2545]"
                   >
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-[6px] bg-[#C2410C] text-white">
                       <Check className="size-3.5 stroke-[3]" />
@@ -131,8 +129,8 @@ export function PanduanDetail() {
             </div>
 
             {/* Kartu Bantuan Tanya Siaga (Node 1341) */}
-            <div className="rounded-[20px] border border-[#E2E8F0] bg-[#F4F1EA] p-7">
-              <p className="text-[17px] font-semibold text-[#0F172A]">
+            <div className="rounded-[20px] border border-[#E2E8F0] bg-[#F1F5F9] p-7">
+              <p className="text-[17px] font-semibold text-[#0B2545]">
                 Masih bingung?
               </p>
               <p className="mt-2.5 text-[14px] leading-relaxed text-[#475569]">
@@ -155,11 +153,11 @@ export function PanduanDetail() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#07090C]/55 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#060B14]/55 p-4"
         >
           <div className="w-full max-w-[520px] rounded-[24px] border border-[#E2E8F0] bg-white p-7 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-[22px] font-bold text-[#0F172A]">
+              <h2 className="text-[22px] font-bold text-[#0B2545]">
                 Tambahkan Panduan ke Rencana
               </h2>
               <button
@@ -172,12 +170,11 @@ export function PanduanDetail() {
             </div>
 
             <p className="mt-3 text-[14px] text-[#475569]">
-              Langkah resmi BNPB untuk skenario {guide.label} akan disatukan
-              dengan profil Keluarga Pratama (Dayeuhkolot).
+              Langkah untuk skenario {guide.label} akan ditambahkan ke rencana keluargamu.
             </p>
 
             <div className="mt-5 space-y-2.5">
-              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-[#F4F1EA] p-3.5 text-[14px] font-medium text-[#0F172A]">
+              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-[#F1F5F9] p-3.5 text-[14px] font-medium text-[#0B2545]">
                 <span className="flex size-5 shrink-0 items-center justify-center rounded-[6px] bg-[#C2410C] text-xs font-bold text-white">
                   ✓
                 </span>
@@ -185,7 +182,7 @@ export function PanduanDetail() {
                   Masukkan semua fase (Sebelum, Saat, dan Sesudah {guide.label})
                 </span>
               </div>
-              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-[#F4F1EA] p-3.5 text-[14px] font-medium text-[#0F172A]">
+              <div className="flex items-center gap-3 rounded-[12px] border border-[#E2E8F0] bg-[#F1F5F9] p-3.5 text-[14px] font-medium text-[#0B2545]">
                 <span className="flex size-5 shrink-0 items-center justify-center rounded-[6px] bg-[#C2410C] text-xs font-bold text-white">
                   ✓
                 </span>

@@ -5,6 +5,7 @@ import { validate } from '../middlewares/validate.js';
 import * as auth from '../controllers/auth.controller.js';
 import * as household from '../controllers/household.controller.js';
 import * as region from '../controllers/region.controller.js';
+import * as cuaca from '../controllers/cuaca.controller.js';
 import * as kit from '../controllers/kit.controller.js';
 import * as drill from '../controllers/drill.controller.js';
 import * as share from '../controllers/share.controller.js';
@@ -76,6 +77,24 @@ router.put(
   household.updateMember,
 );
 router.delete('/household/members/:id', authenticate, validate({ params: idParam }), household.deleteMember);
+
+// Cuaca berdasarkan koordinat (publik): koordinat -> kode desa -> prakiraan BMKG
+router.get(
+  '/cuaca',
+  validate({
+    query: z.object({
+      lat: z.coerce.number().min(-11.5).max(6.5),
+      lng: z.coerce.number().min(94.5).max(141.5),
+    }),
+  }),
+  cuaca.getCuaca,
+);
+
+router.get(
+  '/lokasi/cari',
+  validate({ query: z.object({ q: z.string().trim().min(3, 'Ketik minimal 3 huruf').max(80) }) }),
+  cuaca.cariLokasi,
+);
 
 // Regions & risk
 router.get('/regions', region.listRegions);

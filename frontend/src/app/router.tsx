@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { PublicShell } from "@/components/layout/PublicShell";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { ProtectedRoute, AdminRoute, GuestRoute } from "@/app/ProtectedRoute";
 
 import { Beranda } from "@/pages/Beranda/Beranda";
@@ -24,8 +25,8 @@ import { AdminTitik } from "@/pages/Admin/AdminTitik";
 import { NotFound } from "@/pages/Error/NotFound";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <Beranda /> },
-  { path: "/r/:token", element: <Bagikan /> },
+  { path: "/", element: <PageTransition fade><Beranda /></PageTransition> },
+  { path: "/r/:token", element: <PageTransition><Bagikan /></PageTransition> },
 
   {
     element: <PublicShell />,
@@ -38,15 +39,15 @@ export const router = createBrowserRouter([
   {
     element: <GuestRoute />,
     children: [
-      { path: "/masuk", element: <Masuk /> },
-      { path: "/daftar", element: <Daftar /> },
+      { path: "/masuk", element: <PageTransition><Masuk /></PageTransition> },
+      { path: "/daftar", element: <PageTransition><Daftar /></PageTransition> },
     ],
   },
 
   {
     element: <ProtectedRoute />,
     children: [
-      { path: "/onboarding", element: <Onboarding /> },
+      { path: "/onboarding", element: <PageTransition><Onboarding /></PageTransition> },
       {
         element: <AppShell />,
         children: [
@@ -75,5 +76,5 @@ export const router = createBrowserRouter([
     ],
   },
 
-  { path: "*", element: <NotFound /> },
+  { path: "*", element: <PageTransition><NotFound /></PageTransition> },
 ]);

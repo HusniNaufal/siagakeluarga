@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import {
   Home,
   FileText,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/hooks/useHousehold";
+import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
 const APP_NAV_ITEMS = [
@@ -27,14 +28,14 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const { data: household } = useHousehold();
   const kelurahanLabel = household?.region?.kecamatan
-    ? `Kel. ${household.region.kecamatan}`
-    : "Kel. Dayeuhkolot";
+    ? `Kec. ${household.region.kecamatan}`
+    : "Lokasi belum diisi";
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col border-r border-[#E2E8F0] bg-white px-4 py-8 md:flex">
-      <div className="px-4 text-[18px] font-bold tracking-tight text-[#0B2545]">
-        SiagaKeluarga
-      </div>
+      <Link to="/beranda-saya" aria-label="SiagaKeluarga, beranda saya" className="px-2">
+        <Logo />
+      </Link>
 
       <nav className="mt-8 flex flex-1 flex-col gap-1">
         {APP_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
@@ -43,10 +44,10 @@ export function Sidebar() {
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex h-[44px] items-center gap-2.5 rounded-[12px] px-4 text-[15px] transition-colors",
+                "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[15px] transition-colors",
                 isActive
-                  ? "bg-[#F4F1EA] font-medium text-[#C2410C]"
-                  : "font-normal text-[#475569] hover:bg-[#F4F1EA]/60 hover:text-[#0F172A]",
+                  ? "bg-tint font-semibold text-ink"
+                  : "font-normal text-ink-3 hover:bg-surface hover:text-ink",
               )
             }
           >
@@ -57,15 +58,21 @@ export function Sidebar() {
       </nav>
 
       {/* Kartu profil bawah sesuai siagakeluarga.fig Node 1850 */}
-      <div className="mt-auto flex items-center gap-2.5 rounded-[14px] border border-[#E2E8F0] bg-[#F4F1EA] p-3">
-        <img
-          src="/images/avatar-budi.webp"
-          alt={user?.nama ?? "Budi Pratama"}
-          className="size-9 shrink-0 rounded-full object-cover"
-        />
+      <div className="mt-auto flex items-center gap-2.5 rounded-[14px] border border-[#E2E8F0] bg-[#F1F5F9] p-3">
+        <span
+          aria-hidden="true"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-[#0B2545]"
+        >
+          {(user?.nama ?? "?")
+            .split(" ")
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((s) => s[0]?.toUpperCase())
+            .join("")}
+        </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-semibold text-[#0B2545]">
-            {user?.nama ?? "Budi Pratama"}
+            {user?.nama ?? "Tamu"}
           </p>
           <p className="truncate text-[11px] text-[#475569]">{kelurahanLabel}</p>
         </div>
@@ -75,7 +82,7 @@ export function Sidebar() {
             onClick={logout}
             aria-label="Keluar dari akun"
             title="Keluar"
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#475569] transition-colors hover:bg-white hover:text-[#0F172A]"
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#475569] transition-colors hover:bg-white hover:text-[#0B2545]"
           >
             <LogOut className="size-4" strokeWidth={1.6} />
           </button>
@@ -101,7 +108,7 @@ export function MobileBottomNav() {
               "flex flex-col items-center justify-center gap-1 rounded-xl px-2.5 py-1.5 text-[12px] transition-colors",
               isActive
                 ? "font-semibold text-[#C2410C]"
-                : "font-normal text-[#475569] hover:text-[#0F172A]",
+                : "font-normal text-[#475569] hover:text-[#0B2545]",
             )
           }
         >

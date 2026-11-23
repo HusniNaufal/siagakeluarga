@@ -1,93 +1,82 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Reveal } from "@/components/motion/Reveal";
-import { TopoBackground } from "@/components/layout/TopoBackground";
+import { useId, useState } from "react";
+import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Pembatas } from "@/components/ui/LangkahGambar";
+import { GrafisRumah } from "@/components/ui/Grafis";
 
 const FAQS = [
   {
-    q: "Apakah SiagaKeluarga gratis dipakai?",
-    a: "Ya. Menyusun profil keluarga dan rencana darurat dasar tidak dipungut biaya.",
+    q: "Apakah ini gratis?",
+    a: "Ya. Profil keluarga dan rencana darurat dasar tidak dipungut biaya.",
   },
   {
-    q: "Apakah data keluarga saya aman?",
-    a: "Data disimpan di server kami dan hanya bisa diakses dengan akun kamu. Tautan rencana publik hanya menampilkan info yang kamu pilih untuk dibagikan.",
+    q: "Siapa yang bisa melihat data keluarga saya?",
+    a: "Isi lengkapnya hanya lewat akunmu. Tautan yang dibagikan menampilkan bagian yang kamu pilih, dalam mode baca-saja.",
   },
   {
-    q: "Apakah AI menggantikan arahan BPBD?",
-    a: "Tidak. Rencana dari AI membantu kamu bersiap, tapi tetap ikuti arahan resmi BPBD atau petugas saat kejadian berlangsung.",
+    q: "Apakah jawaban di sini menggantikan BPBD?",
+    a: "Tidak. Rencana ini untuk bersiap. Saat kejadian berlangsung, ikuti arahan BPBD, petugas, atau sirine di tempatmu.",
   },
   {
-    q: "Bagaimana cara membagikan rencana ke keluarga?",
-    a: 'Buka halaman Rencana Darurat, lalu tekan "Bagikan ke Keluarga" untuk mendapat tautan baca-saja yang bisa dikirim lewat WhatsApp.',
+    q: "Bagaimana cara mengirimnya ke orang tua saya?",
+    a: "Di halaman rencana, pilih bagikan. Kamu mendapat tautan yang bisa dikirim lewat WhatsApp. Penerima tidak perlu membuat akun.",
   },
   {
-    q: "Dari mana sumber data cuaca dan bencananya?",
-    a: "Prakiraan cuaca dari BMKG dan data zona bahaya dari BNPB, diperbarui berkala.",
+    q: "Dari mana cuaca dan data bencananya?",
+    a: "Prakiraan cuaca dari BMKG. Angka kejadian dan zona dari BNPB. Keduanya diberi keterangan sumber di halaman yang memakainya.",
   },
 ];
 
 export function Faq() {
   const [open, setOpen] = useState(0);
+  const baseId = useId();
 
   return (
-    <section className="relative overflow-hidden bg-white px-6 py-24 md:px-[100px] md:py-40">
-      <TopoBackground variant="light" />
-
-      <div className="relative z-10 mx-auto max-w-[1000px]">
-        <Reveal className="text-center">
-          <p className="text-[13px] tracking-[0.04em] text-[#C2410C]">FAQ</p>
-          <h2 className="mt-6 text-3xl font-bold tracking-[-0.025em] text-[#0F172A] md:text-[40px] md:leading-[1.15]">
-            Pertanyaan yang sering ditanyakan
-          </h2>
-        </Reveal>
-
-        <Reveal
-          delay={0.08}
-          className="mt-14 overflow-hidden rounded-[16px] border border-[#E2E8F0] bg-white"
-        >
+    <section id="faq" className="scroll-mt-20 bg-paper py-20 md:py-28">
+      <div className="shell mb-14">
+        <Pembatas />
+      </div>
+      <div className="shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div>
+          <h2 className="t-h2 text-ink">Pertanyaan yang biasanya ditanyakan dulu.</h2>
+          <GrafisRumah className="mt-12 hidden w-[320px] lg:block" />
+        </div>
+        <div className="divide-y divide-line border-y border-line">
           {FAQS.map((item, i) => {
             const isOpen = open === i;
+            const panelId = `${baseId}-${i}`;
             return (
-              <div
-                key={item.q}
-                className={i > 0 ? "border-t border-[#E2E8F0]" : undefined}
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpen(isOpen ? -1 : i)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-4 px-6 py-6 text-left transition-colors hover:bg-[#F4F1EA]/40"
-                >
-                  <span className="text-[17px] font-medium text-[#0F172A]">
-                    {item.q}
-                  </span>
-                  <span
-                    className={`text-[20px] leading-none font-normal ${
-                      isOpen ? "text-[#C2410C]" : "text-[#475569]"
-                    }`}
+              <div key={item.q}>
+                <h3>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(isOpen ? -1 : i)}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    className="flex min-h-14 w-full items-center justify-between gap-4 py-5 text-left"
                   >
-                    {isOpen ? "−" : "+"}
-                  </span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
-                      className="overflow-hidden"
-                    >
-                      <p className="px-6 pb-6 text-[15px] leading-[1.6] text-[#475569]">
-                        {item.a}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    <span className="text-[17px] font-medium text-ink">{item.q}</span>
+                    <Plus
+                      className={cn(
+                        "size-5 shrink-0 text-muted transition-transform duration-200",
+                        isOpen && "rotate-45",
+                      )}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </h3>
+                <div
+                  id={panelId}
+                  role="region"
+                  hidden={!isOpen}
+                  className="pb-6 text-[16px] leading-[1.65] text-ink-3"
+                >
+                  {item.a}
+                </div>
               </div>
             );
           })}
-        </Reveal>
+        </div>
       </div>
     </section>
   );

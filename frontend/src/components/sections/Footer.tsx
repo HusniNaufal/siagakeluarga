@@ -1,65 +1,67 @@
 import { Link } from "react-router-dom";
-import { TopoBackground } from "@/components/layout/TopoBackground";
+import { Logo } from "@/components/brand/Logo";
+import { Bukit } from "@/components/ui/Grafis";
 
-const LINKS = [
-  { href: "#cara-kerja", label: "Cara kerja" },
-  { href: "/panduan", label: "Panduan bencana" },
-  { href: "#data-bmkg", label: "Data BMKG" },
-  { href: "/masuk", label: "Masuk" },
+const COLUMNS = [
+  {
+    title: "Produk",
+    links: [
+      { href: "/#cara-kerja", label: "Cara kerja" },
+      { href: "/#fitur", label: "Panduan bencana" },
+      { href: "/#data-bmkg", label: "Contoh cuaca" },
+    ],
+  },
+  {
+    title: "Akun",
+    links: [
+      { href: "/masuk", label: "Masuk" },
+      { href: "/daftar", label: "Daftar" },
+      { href: "/panduan", label: "Semua panduan" },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
-    <footer className="relative overflow-hidden bg-[#0B2545] px-6 py-24 text-white md:px-[100px]">
-      <TopoBackground variant="dark" />
-
-      <div className="relative z-10 mx-auto max-w-[1240px]">
-        <p className="text-[36px] font-bold tracking-[-0.025em] text-[#F5F5F4]">
-          SiagaKeluarga
-        </p>
-
-        <div className="mt-10 flex flex-wrap gap-12">
+    <footer className="relative bg-night text-white">
+      <Bukit className="absolute inset-x-0 top-0 -translate-y-[calc(100%-1px)]" />
+      <div className="shell py-16 md:py-20">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
           <div>
-            <p className="text-[32px] font-semibold text-[#FB923C]">5 Bencana</p>
-            <p className="mt-1 text-[12px] text-[#94A3B8]">
-              Banjir, Gempa, Longsor, Cuaca, Tsunami
+            <Logo tone="white" />
+            <p className="mt-5 max-w-[38ch] text-[15px] leading-[1.65] text-mist">
+              Rencana darurat keluarga untuk banjir, gempa, longsor, cuaca
+              ekstrem, dan tsunami.
             </p>
           </div>
-          <div>
-            <p className="text-[32px] font-semibold text-white">Tiap 3 Jam</p>
-            <p className="mt-1 text-[12px] text-[#94A3B8]">
-              Pembaruan otomatis data cuaca
-            </p>
-          </div>
+          {COLUMNS.map((col) => (
+            <nav key={col.title} aria-label={col.title}>
+              <p className="text-[14px] text-mist">{col.title}</p>
+              <ul className="mt-4 space-y-3">
+                {col.links.map((link) => (
+                  <li key={link.href + link.label}>
+                    {link.href.includes("#") ? (
+                      <a href={link.href} className="text-[16px] text-white/90 hover:text-white">
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link to={link.href} className="text-[16px] text-white/90 hover:text-white">
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        <nav className="mt-10 flex flex-wrap gap-10 text-[15px] text-[#9AA4B2]">
-          {LINKS.map((link) =>
-            link.href.startsWith("#") ? (
-              <a
-                key={link.href}
-                href={link.href}
-                className="transition-colors hover:text-white"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="transition-colors hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
-        </nav>
-
-        <div className="mt-10 border-t border-white/10 pt-6">
-          <div className="flex flex-col gap-2 text-[13px] text-[#9AA4B2] md:flex-row md:justify-between">
-            <p>Data cuaca BMKG &amp; data bencana BNPB, IT RUSH 2026</p>
-            <p>Dayeuhkolot, Kab. Bandung, 21 Nov 2026, 14:00 WIB</p>
-          </div>
+        <div className="mt-14 flex flex-col gap-3 border-t border-white/10 pt-6 text-[13px] leading-[1.6] text-mist md:flex-row md:items-center md:justify-between">
+          <p>
+            Data cuaca: BMKG. Data bencana: BNPB. Foto: Iqro Rinaldi dan Haikal Vivar di Unsplash.
+            Saat kejadian, arahan petugas di tempat lebih utama daripada halaman ini.
+          </p>
+          <p className="shrink-0">IT RUSH 2026</p>
         </div>
       </div>
     </footer>

@@ -5,6 +5,8 @@ import {
   useHousehold,
 } from "@/hooks/useHousehold";
 import type { KelompokUmur } from "@/lib/types";
+import { useKontakKeluarga } from "@/hooks/useKontak";
+import { EmptyIllustration } from "@/components/ui/EmptyIllustration";
 
 const UMUR_LABEL: Record<KelompokUmur, string> = {
   BALITA: "Balita",
@@ -12,52 +14,6 @@ const UMUR_LABEL: Record<KelompokUmur, string> = {
   DEWASA: "Dewasa",
   LANSIA: "Lansia",
 };
-
-const DEFAULT_MEMBERS = [
-  {
-    id: "m-1",
-    nama: "Budi, Ayah (42 thn)",
-    sub: "Tidak ada kebutuhan khusus",
-    avatar: "/images/avatar-budi.webp",
-    initials: "BP",
-    tags: [] as string[],
-  },
-  {
-    id: "m-2",
-    nama: "Sari, Ibu (39 thn)",
-    sub: "",
-    avatar: null,
-    initials: "SP",
-    tags: ["Ibu hamil"],
-  },
-  {
-    id: "m-3",
-    nama: "Nenek Aminah (72 thn)",
-    sub: "",
-    avatar: null,
-    initials: "NA",
-    tags: ["Lansia", "Obat darah tinggi rutin"],
-  },
-  {
-    id: "m-4",
-    nama: "Raka (6 thn)",
-    sub: "Balita, perlu pendampingan saat evakuasi",
-    avatar: null,
-    initials: "RP",
-    tags: [] as string[],
-  },
-];
-
-interface EmergencyContact {
-  id: string;
-  nama: string;
-  nomor: string;
-}
-
-const DEFAULT_CONTACTS: EmergencyContact[] = [
-  { id: "c-1", nama: "Pak RT Dayeuhkolot", nomor: "(022) 512-7788" },
-  { id: "c-2", nama: "Puskesmas Dayeuhkolot", nomor: "(022) 589-1122" },
-];
 
 function getInitials(name: string) {
   return name
@@ -78,7 +34,7 @@ export function Keluarga() {
   const [kelompokUmur, setKelompokUmur] = useState<KelompokUmur>("DEWASA");
   const [kebutuhan, setKebutuhan] = useState("");
 
-  const [contacts, setContacts] = useState<EmergencyContact[]>(DEFAULT_CONTACTS);
+  const { kontak: contacts, tambah: tambahKontak, hapus: hapusKontak } = useKontakKeluarga();
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactNama, setContactNama] = useState("");
   const [contactNomor, setContactNomor] = useState("");
@@ -104,27 +60,21 @@ export function Keluarga() {
   function onAddContact(e: React.FormEvent) {
     e.preventDefault();
     if (!contactNama.trim() || !contactNomor.trim()) return;
-    setContacts((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        nama: contactNama.trim(),
-        nomor: contactNomor.trim(),
-      },
-    ]);
+    tambahKontak(contactNama, contactNomor);
     setContactNama("");
     setContactNomor("");
     setShowAddContact(false);
   }
 
   const hasBackendMembers = (household.members?.length ?? 0) > 0;
+  const profilLengkap = hasBackendMembers && Boolean(household.region_id);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       {/* Kolom Kiri — Head + Daftar Kartu Anggota (persis siagakeluarga.fig Node 2109..2145) */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0F172A]">
+          <h1 className="text-[36px] leading-tight font-bold tracking-[-0.02em] text-[#0B2545]">
             Profil keluarga
           </h1>
           <button
@@ -137,25 +87,17 @@ export function Keluarga() {
         </div>
 
         {hasBackendMembers
-          ? household.members!.map((m, idx) => (
+          ? household.members!.map((m) => (
               <div
                 key={m.id}
                 className="flex items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-6"
               >
                 <div className="flex items-center gap-4">
-                  {idx === 0 ? (
-                    <img
-                      src="/images/avatar-budi.webp"
-                      alt={m.panggilan}
-                      className="size-16 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#F4F1EA] text-[20px] text-[#0B2545]">
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[20px] text-[#0B2545]">
                       {getInitials(m.panggilan)}
                     </div>
-                  )}
                   <div>
-                    <p className="text-[18px] font-semibold text-[#0F172A]">
+                    <p className="text-[18px] font-semibold text-[#0B2545]">
                       {m.panggilan} ({UMUR_LABEL[m.kelompok_umur]})
                     </p>
                     {m.kebutuhan_khusus ? (
@@ -163,7 +105,7 @@ export function Keluarga() {
                         {m.kebutuhan_khusus.split(",").map((tag) => (
                           <span
                             key={tag}
-                            className="rounded-[6px] bg-[#F4F1EA] px-2.5 py-1 text-[13px] font-medium text-[#C2410C]"
+                            className="rounded-[6px] bg-[#F1F5F9] px-2.5 py-1 text-[13px] font-medium text-[#C2410C]"
                           >
                             {tag.trim()}
                           </span>
@@ -178,59 +120,33 @@ export function Keluarga() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => deleteMember.mutate(m.id)}
-                  className="text-[14px] font-semibold text-[#C2410C] hover:underline"
+                  onClick={() => {
+                    if (window.confirm(`Hapus ${m.panggilan} dari keluarga?`)) deleteMember.mutate(m.id);
+                  }}
+                  aria-label={`Hapus ${m.panggilan}`}
+                  className="text-[14px] font-semibold text-[#B91C1C] hover:underline"
                 >
-                  Ubah
+                  Hapus
                 </button>
               </div>
             ))
-          : DEFAULT_MEMBERS.map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center justify-between gap-4 rounded-[20px] border border-[#E2E8F0] bg-white p-6"
-              >
-                <div className="flex items-center gap-4">
-                  {m.avatar ? (
-                    <img
-                      src={m.avatar}
-                      alt={m.nama}
-                      className="size-16 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#F4F1EA] text-[20px] text-[#0B2545]">
-                      {m.initials}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-[18px] font-semibold text-[#0F172A]">
-                      {m.nama}
-                    </p>
-                    {m.tags.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {m.tags.map((t) => (
-                          <span
-                            key={t}
-                            className="rounded-[6px] bg-[#F4F1EA] px-2.5 py-1 text-[13px] font-medium text-[#C2410C]"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-1 text-[14px] text-[#475569]">{m.sub}</p>
-                    )}
-                  </div>
-                </div>
+          : (
+              <div className="rounded-[20px] border border-dashed border-[#CBD5E1] bg-white p-8 text-center">
+                <EmptyIllustration />
+                <p className="text-[18px] font-semibold text-[#0B2545]">Belum ada anggota keluarga</p>
+                <p className="mx-auto mt-2 max-w-[44ch] text-[15px] leading-[1.6] text-[#475569]">
+                  Tambahkan semua orang yang tinggal di rumah. Usia dan kebutuhan khusus menentukan
+                  isi tas siaga dan tugas masing-masing.
+                </p>
                 <button
                   type="button"
                   onClick={() => setShowAddMember(true)}
-                  className="text-[14px] font-semibold text-[#C2410C] hover:underline"
+                  className="mt-5 h-[44px] rounded-[12px] bg-[#C2410C] px-5 text-[14px] font-semibold text-white hover:bg-[#9A3412]"
                 >
-                  Ubah
+                  + Tambah anggota pertama
                 </button>
               </div>
-            ))}
+            )}
       </div>
 
       {/* Kolom Kanan — Panel Alamat, Kontak Darurat Keluarga Besar, Ringkasan Profil (persis Node 2147..2167) */}
@@ -238,23 +154,21 @@ export function Keluarga() {
         {/* Panel Alamat (Node 2147) */}
         <div className="rounded-[20px] border border-[#E2E8F0] bg-white p-6">
           <p className="text-[13px] text-[#475569]">Lokasi rumah</p>
-          <div className="relative mt-3 h-[220px] w-full overflow-hidden rounded-[16px]">
-            <img
-              src="/images/map-dayeuhkolot.webp"
-              alt="Lokasi rumah Dayeuhkolot"
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute top-[100px] left-[146px] size-5 rounded-full bg-[#C2410C]" />
-          </div>
-          <p className="mt-4 text-[17px] font-semibold text-[#0F172A]">
-            Jl. Raya Dayeuhkolot No. 12
+          <p className="mt-3 text-[17px] font-semibold text-[#0B2545]">
+            {household.region
+              ? `Kec. ${household.region.kecamatan}`
+              : "Lokasi belum diisi"}
           </p>
           <p className="mt-1 text-[15px] text-[#475569]">
-            Kel. Dayeuhkolot, Kab. Bandung
+            {household.region
+              ? household.region.kab_kota
+              : "Isi wilayah di Onboarding supaya titik kumpul dan cuaca sesuai rumahmu."}
           </p>
-          <p className="mt-2.5 text-[13px] font-semibold text-[#9A3412]">
-            Zona waspada banjir (400 m dari Sungai Citarum)
-          </p>
+          {household.region?.hazard_zones?.length ? (
+            <p className="mt-2.5 text-[13px] font-semibold text-[#9A3412]">
+              Rawan: {household.region.hazard_zones.map((z) => z.jenis_bencana.toLowerCase().replace("_", " ")).join(", ")}
+            </p>
+          ) : null}
         </div>
 
         {/* Kontak Darurat Keluarga Besar (Node 2155) */}
@@ -263,21 +177,37 @@ export function Keluarga() {
             Kontak darurat keluarga besar
           </p>
           <div className="mt-3 space-y-2.5">
+            {contacts.length === 0 && (
+              <p className="text-[13px] leading-[1.6] text-[#475569]">
+                Belum ada kontak. Tambahkan RT, puskesmas, atau BPBD setempat. Nomor 112 selalu tersedia di
+                halaman rencana. Kontak ini tersimpan di perangkat ini saja.
+              </p>
+            )}
             {contacts.map((c) => (
               <div
                 key={c.id}
                 className="flex items-center justify-between rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] px-3.5 py-2.5"
               >
-                <span className="text-[14px] font-semibold text-[#0F172A]">
+                <span className="text-[14px] font-semibold text-[#0B2545]">
                   {c.nama}
                 </span>
-                <span className="text-[13px] text-[#475569]">{c.nomor}</span>
+                <span className="flex items-center gap-3">
+                  <span className="text-[13px] text-[#475569]">{c.nomor}</span>
+                  <button
+                    type="button"
+                    onClick={() => hapusKontak(c.id)}
+                    aria-label={`Hapus kontak ${c.nama}`}
+                    className="text-[13px] font-semibold text-[#B91C1C] hover:underline"
+                  >
+                    Hapus
+                  </button>
+                </span>
               </div>
             ))}
             <button
               type="button"
               onClick={() => setShowAddContact(true)}
-              className="w-full rounded-[10px] border border-[#CBD5E1] bg-white py-2.5 text-center text-[13px] font-semibold text-[#C2410C] hover:bg-[#F4F1EA]/40"
+              className="w-full rounded-[10px] border border-[#CBD5E1] bg-white py-2.5 text-center text-[13px] font-semibold text-[#C2410C] hover:bg-[#F1F5F9]/40"
             >
               + Tambah kontak darurat
             </button>
@@ -290,19 +220,23 @@ export function Keluarga() {
           <div className="mt-3 space-y-3 text-[14px]">
             <div className="flex items-center justify-between">
               <span className="text-[#475569]">Anggota terdaftar</span>
-              <span className="font-semibold text-[#0F172A]">
+              <span className="font-semibold text-[#0B2545]">
                 {hasBackendMembers
                   ? `${household.members!.length} orang`
-                  : "4 orang"}
+                  : "0 orang"}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[#475569]">Kebutuhan khusus</span>
-              <span className="font-semibold text-[#C2410C]">3 kondisi</span>
+              <span className="font-semibold text-[#C2410C]">
+                {(household.members ?? []).filter((m) => m.kebutuhan_khusus).length} orang
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[#475569]">Status profil</span>
-              <span className="font-semibold text-[#0F766E]">Lengkap</span>
+              <span className={profilLengkap ? "font-semibold text-[#0F766E]" : "font-semibold text-[#B45309]"}>
+                {profilLengkap ? "Lengkap" : "Belum lengkap"}
+              </span>
             </div>
           </div>
         </div>
@@ -313,11 +247,11 @@ export function Keluarga() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#07090C]/55 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#060B14]/55 p-4"
         >
           <div className="w-full max-w-[480px] rounded-[24px] border border-[#E2E8F0] bg-white p-7 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-[22px] font-bold text-[#0F172A]">
+              <h2 className="text-[22px] font-bold text-[#0B2545]">
                 Tambah anggota keluarga
               </h2>
               <button
@@ -336,7 +270,7 @@ export function Keluarga() {
                 <input
                   value={panggilan}
                   onChange={(e) => setPanggilan(e.target.value)}
-                  placeholder="Mis. Raka"
+                  placeholder="Nama panggilan"
                   required
                   className="h-11 w-full rounded-[12px] border border-[#CBD5E1] px-3.5 text-[14px] outline-none focus-visible:border-[#C2410C]"
                 />
@@ -395,11 +329,11 @@ export function Keluarga() {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#07090C]/55 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#060B14]/55 p-4"
         >
           <div className="w-full max-w-[460px] rounded-[24px] border border-[#E2E8F0] bg-white p-7 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-[22px] font-bold text-[#0F172A]">
+              <h2 className="text-[22px] font-bold text-[#0B2545]">
                 Tambah kontak darurat
               </h2>
               <button
@@ -418,7 +352,7 @@ export function Keluarga() {
                 <input
                   value={contactNama}
                   onChange={(e) => setContactNama(e.target.value)}
-                  placeholder="Mis. Pak RT Dayeuhkolot"
+                  placeholder="Mis. Pak RT, Puskesmas, BPBD setempat"
                   required
                   className="h-11 w-full rounded-[12px] border border-[#CBD5E1] px-3.5 text-[14px] outline-none focus-visible:border-[#C2410C]"
                 />
@@ -430,7 +364,7 @@ export function Keluarga() {
                 <input
                   value={contactNomor}
                   onChange={(e) => setContactNomor(e.target.value)}
-                  placeholder="Mis. (022) 512-7788"
+                  placeholder="Mis. 0812-3456-7890"
                   required
                   className="h-11 w-full rounded-[12px] border border-[#CBD5E1] px-3.5 text-[14px] outline-none focus-visible:border-[#C2410C]"
                 />

@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { GrafisRumah } from "@/components/ui/Grafis";
 import { Link } from "react-router-dom";
 import { GUIDES, FASE_LABEL, type Fase } from "@/content/panduan";
-import { TopoBackground } from "@/components/layout/TopoBackground";
 import type { JenisBencana } from "@/lib/types";
 
 type FilterValue = "SEMUA" | JenisBencana;
@@ -26,46 +26,37 @@ export function PanduanDaftar() {
 
   return (
     <div>
-      {/* Hero foto penuh dengan Filter Kapsul (persis siagakeluarga.fig Node 1173) */}
-      <section className="relative overflow-hidden bg-[#07090C] px-6 pt-40 pb-24 md:px-[100px]">
-        <img
-          src="/images/panduan-hero.webp"
-          alt="Panduan bencana"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#07090C]/90 via-[#07090C]/20 to-transparent" />
-
-        <div className="relative z-10 mx-auto max-w-[1240px]">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-bold tracking-[-0.025em] text-white md:text-[56px]">
-              Panduan bencana
-            </h1>
-            <p className="mt-4 text-[18px] text-[#F5F5F4]">
-              Langkah resmi BNPB untuk sebelum, saat, dan sesudah bencana.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-2.5">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setFilter(f.value)}
-                  className={`rounded-full px-5 py-2.5 text-[15px] transition-colors ${
-                    filter === f.value
-                      ? "bg-[#C2410C] font-semibold text-white"
-                      : "border border-white/25 bg-[#0B2545]/80 font-medium text-white hover:bg-[#0B2545]"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+      <section className="relative overflow-hidden bg-paper px-5 pt-32 pb-10 md:px-8">
+        <GrafisRumah className="absolute top-20 right-12 hidden w-[340px] lg:block" />
+        <div className="mx-auto max-w-[1240px]">
+          <h1 className="max-w-[16ch] text-[40px] leading-[1.05] font-semibold tracking-[-0.03em] text-ink md:text-[56px]">
+            Panduan bencana
+          </h1>
+          <p className="mt-4 max-w-[54ch] text-[18px] leading-[1.6] text-ink-3">
+            Langkah untuk sebelum, saat, dan sesudah bencana. Pilih jenisnya, lalu baca langkahnya satu per satu.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-2.5" role="group" aria-label="Jenis bencana">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setFilter(f.value)}
+                aria-pressed={filter === f.value}
+                className={`h-11 rounded-full px-5 text-[15px] transition-colors ${
+                  filter === f.value
+                    ? "bg-ink font-semibold text-white"
+                    : "border border-line bg-base font-medium text-ink-3 hover:border-ink/40 hover:text-ink"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Grid Panduan (persis siagakeluarga.fig Node 1201..1275) */}
-      <section className="relative overflow-hidden bg-[#F4F1EA] px-6 py-14 md:px-[100px]">
-        <TopoBackground variant="warm" />
+      <section className="bg-paper px-5 pb-20 md:px-8">
 
         <div className="relative z-10 mx-auto max-w-[1240px]">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -73,28 +64,16 @@ export function PanduanDaftar() {
               <Link
                 key={`${guide.jenis}-${fase}`}
                 to={`/panduan/${guide.jenis}?fase=${fase}`}
-                className="group flex flex-col gap-3 rounded-[20px] border border-[#E2E8F0] bg-white p-[14px] pb-[18px] transition-transform hover:-translate-y-0.5"
+                className="group flex min-h-[180px] flex-col rounded-2xl border border-line bg-base p-6 transition-colors hover:border-ink/40"
               >
-                <div className="h-[240px] overflow-hidden rounded-[14px] bg-[#E2E8F0]">
-                  <img
-                    src={guide.fase[fase].image || guide.image}
-                    alt={`${guide.label} (${FASE_LABEL[fase]})`}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/panduan-hero.webp";
-                    }}
-                  />
-                </div>
-                <p
-                  className="text-[13px] font-normal"
-                  style={{ color: guide.color }}
-                >
-                  {guide.label} ({FASE_LABEL[fase]})
+                <span aria-hidden="true" className="mb-4 h-1 w-8 rounded-full" style={{ backgroundColor: guide.color }} />
+                <p className="text-[14px] font-medium" style={{ color: guide.color }}>
+                  {guide.label} · {FASE_LABEL[fase]}
                 </p>
-                <p className="text-[18px] leading-[1.25] font-semibold text-[#0F172A]">
+                <p className="mt-3 flex-1 text-[18px] leading-[1.35] font-semibold tracking-[-0.01em] text-ink">
                   {guide.fase[fase].ringkasan}
                 </p>
+                <span className="mt-4 text-[15px] font-semibold text-ink group-hover:underline">Baca langkahnya</span>
               </Link>
             ))}
           </div>

@@ -2,122 +2,142 @@ import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/brand/Logo";
 
 const LINKS = [
   { href: "#cara-kerja", label: "Cara kerja" },
   { href: "#fitur", label: "Fitur" },
   { href: "/panduan", label: "Panduan" },
-  { href: "#data-bmkg", label: "Data BMKG" },
+  { href: "#data-bmkg", label: "Cuaca" },
 ];
 
+interface PublicNavbarProps {
+  /** "fixed" melayang di atas hero, "flow" menempel di atas halaman biasa. */
+  placement?: "fixed" | "flow";
+}
+
 /**
- * Navbar kartu melayang (persis siagakeluarga.fig Node 482 untuk terang & Node 540 untuk gelap #13345D).
+ * Bar selalu solid (putih), tidak transparan: di atas foto terang maupun gelap kontrasnya tetap sama,
+ * jadi tidak pernah tenggelam. Tidak ada varian gelap yang harus ditebak dari posisi scroll.
  */
-export function PublicNavbar({ dark = false }: { dark?: boolean }) {
-  const [scrolled, setScrolled] = useState(false);
+export function PublicNavbar({ placement = "flow" }: PublicNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const floating = placement === "fixed";
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
+  const isActive = (href: string) =>
+    href === "/panduan" ? location.pathname.startsWith("/panduan") : false;
 
   return (
-    <header className="fixed inset-x-0 top-4 z-50 flex flex-col items-center px-4 md:top-8 md:px-5">
-      <div
+    <>
+      <header
         className={cn(
-          "flex h-[72px] w-full max-w-[1240px] items-center justify-between rounded-[20px] pr-3 pl-7 transition-all duration-300",
-          dark
-            ? "border border-white/10 bg-[#13345D] text-[#F5F5F4]"
-            : scrolled
-              ? "border border-[#E2E8F0] bg-white/95 text-[#0F172A] shadow-[0_10px_30px_rgba(11,37,69,0.08)] backdrop-blur-md"
-              : "bg-white text-[#0F172A] shadow-[0_10px_30px_rgba(11,37,69,0.08)]",
+          "z-50 w-full",
+          floating
+            ? "fixed inset-x-0 top-0 px-4 pt-3 md:pt-5"
+            : "sticky top-0 border-b border-line bg-paper/95 backdrop-blur-md",
         )}
       >
-        <Link
-          to="/"
+        <div
           className={cn(
-            "text-[18px] font-semibold tracking-[-0.01em] transition-colors",
-            dark ? "text-[#F5F5F4]" : "text-[#0B2545]",
+            "mx-auto flex h-14 max-w-[1240px] items-center justify-between gap-4",
+            floating &&
+              "rounded-[18px] border border-line bg-white pr-2 pl-4 shadow-[0_10px_30px_-12px_rgba(6,11,20,0.45)]",
           )}
         >
-          SiagaKeluarga
-        </Link>
-
-        <nav className="hidden items-center gap-8 text-[15px] font-normal md:flex">
-          {LINKS.map((link) => {
-            const isActive =
-              link.href === "/panduan" && location.pathname.startsWith("/panduan");
-            return link.href.startsWith("#") && location.pathname === "/" ? (
-              <a
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "transition-colors",
-                  dark
-                    ? "text-[#9AA4B2] hover:text-white"
-                    : "text-[#475569] hover:text-[#0B2545]",
-                )}
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.href}
-                to={link.href.startsWith("#") ? `/${link.href}` : link.href}
-                className={cn(
-                  "transition-colors",
-                  isActive
-                    ? "font-semibold text-[#C2410C]"
-                    : dark
-                      ? "text-[#9AA4B2] hover:text-white"
-                      : "text-[#475569] hover:text-[#0B2545]",
-                )}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center gap-2.5">
-          <Link
-            to="/daftar"
-            className="flex h-[44px] items-center justify-center rounded-full bg-[#C2410C] px-5 text-[15px] font-semibold text-white transition-all duration-150 hover:scale-[1.02] hover:bg-[#9A3412]"
-          >
-            Buat rencana
+          <Link to="/" aria-label="SiagaKeluarga, beranda" className="shrink-0">
+            <Logo />
           </Link>
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
-            className={cn(
-              "flex size-10 items-center justify-center rounded-xl transition-colors md:hidden",
-              dark
-                ? "text-white hover:bg-white/10"
-                : "text-[#0B2545] hover:bg-[#F4F1EA]",
-            )}
-          >
-            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
-        </div>
-      </div>
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Utama">
+            {LINKS.map((link) => {
+              const active = isActive(link.href);
+              const className = cn(
+                "rounded-full px-3.5 py-2 text-[15px] transition-colors",
+                active
+                  ? "bg-tint font-semibold text-ink"
+                  : "text-ink-3 hover:bg-tint hover:text-ink",
+              );
 
-      {/* Drawer menu mobile */}
+              if (link.href.startsWith("#") && location.pathname === "/") {
+                return (
+                  <a key={link.href} href={link.href} className={className}>
+                    {link.label}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href.startsWith("#") ? `/${link.href}` : link.href}
+                  className={className}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-1.5">
+            <Link
+              to="/masuk"
+              className="hidden h-10 items-center rounded-full px-3.5 text-[15px] font-medium text-ink-3 transition-colors hover:text-ink md:inline-flex"
+            >
+              Masuk
+            </Link>
+            <Link
+              to="/daftar"
+              className="inline-flex h-10 items-center rounded-full bg-accent-dark px-4 text-[15px] font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-accent-hover active:scale-[0.99]"
+            >
+              Buat rencana
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
+              aria-expanded={mobileOpen}
+              className="inline-flex size-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-tint md:hidden"
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
       {mobileOpen && (
-        <div className="mt-2 w-full max-w-[1240px] rounded-[20px] border border-[#E2E8F0] bg-white p-5 shadow-[0_20px_50px_rgba(11,37,69,0.16)] md:hidden">
-          <nav className="flex flex-col gap-1">
+        <div className="fixed inset-0 z-40 flex flex-col bg-white md:hidden">
+          <div className="flex h-20 items-center justify-between px-5">
+            <Logo />
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Tutup menu"
+              className="inline-flex size-11 items-center justify-center rounded-full text-ink hover:bg-tint"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-5 pt-4 pb-8" aria-label="Menu seluler">
             {LINKS.map((link) =>
               link.href.startsWith("#") && location.pathname === "/" ? (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-xl px-4 py-3 text-[15px] font-medium text-[#0F172A] transition-colors hover:bg-[#F4F1EA]"
+                  className="rounded-2xl px-4 py-4 text-[19px] font-medium text-ink hover:bg-tint"
                 >
                   {link.label}
                 </a>
@@ -126,23 +146,31 @@ export function PublicNavbar({ dark = false }: { dark?: boolean }) {
                   key={link.href}
                   to={link.href.startsWith("#") ? `/${link.href}` : link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-xl px-4 py-3 text-[15px] font-medium text-[#0F172A] transition-colors hover:bg-[#F4F1EA]"
+                  className="rounded-2xl px-4 py-4 text-[19px] font-medium text-ink hover:bg-tint"
                 >
                   {link.label}
                 </Link>
               ),
             )}
-            <div className="my-2 h-px bg-[#E2E8F0]" />
-            <Link
-              to="/masuk"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-xl px-4 py-3 text-[15px] font-medium text-[#475569] transition-colors hover:bg-[#F4F1EA]"
-            >
-              Masuk ke akun
-            </Link>
+            <div className="mt-auto space-y-3 pt-8">
+              <Link
+                to="/daftar"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center rounded-full bg-accent-dark px-6 py-4 text-[17px] font-semibold text-white"
+              >
+                Buat rencana gratis
+              </Link>
+              <Link
+                to="/masuk"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center rounded-full border border-line px-6 py-4 text-[17px] font-semibold text-ink"
+              >
+                Masuk
+              </Link>
+            </div>
           </nav>
         </div>
       )}
-    </header>
+    </>
   );
 }

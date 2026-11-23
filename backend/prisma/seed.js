@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import prisma from '../src/config/prisma.js';
 
 async function main() {
@@ -143,7 +144,14 @@ async function main() {
   console.log('✅ Data Wilayah Kota Bengkulu (Region, HazardZone, AssemblyPoint) berhasil dibuat.');
 
   // 2. Seed Akun Admin
-  const adminPasswordHash = await bcrypt.hash('admin1234', 10);
+  // Password admin TIDAK ditulis di kode. Ambil dari SEED_ADMIN_PASSWORD; bila kosong,
+  // dibuat acak dan dicetak sekali di konsol ini (simpan, tidak bisa dilihat lagi).
+  let adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminPassword) {
+    adminPassword = randomBytes(12).toString('base64url');
+    console.log(`🔑 SEED_ADMIN_PASSWORD kosong. Password admin acak: ${adminPassword}`);
+  }
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
   await prisma.user.upsert({
     where: { email: 'admin@siagakeluarga.id' },
     update: {
@@ -162,143 +170,152 @@ async function main() {
   console.log('✅ Akun Admin (admin@siagakeluarga.id) berhasil dibuat.');
 
   // 3. Seed Akun Demo Wajib Lomba beserta Household, 4 Anggota Keluarga, 1 EmergencyPlan, dan 5 KitItem
-  const demoPasswordHash = await bcrypt.hash('demo1234', 10);
-  const demoUser = await prisma.user.upsert({
-    where: { email: 'demo@siagakeluarga.id' },
-    update: {
-      nama: 'Keluarga Budi Santoso (Demo Bengkulu)',
-      password_hash: demoPasswordHash,
-      role: 'USER',
-    },
-    create: {
-      nama: 'Keluarga Budi Santoso (Demo Bengkulu)',
-      email: 'demo@siagakeluarga.id',
-      password_hash: demoPasswordHash,
-      role: 'USER',
-    },
-  });
-
-  const demoHousehold = await prisma.household.create({
-    data: {
-      user_id: demoUser.id,
-      region_id: regionTelukSegara.id,
-      lat: -3.7912,
-      lng: 102.2535,
-      share_token: 'demo-bengkulu-siagakeluarga-2026',
-      members: {
-        create: [
-          {
-            panggilan: 'Ayah Budi',
-            kelompok_umur: 'DEWASA',
-            kebutuhan_khusus: null,
-          },
-          {
-            panggilan: 'Ibu Sari',
-            kelompok_umur: 'DEWASA',
-            kebutuhan_khusus: 'Asma ringan (butuh inhaler cadangan di tas siaga)',
-          },
-          {
-            panggilan: 'Nenek Rahma',
-            kelompok_umur: 'LANSIA',
-            kebutuhan_khusus: 'Hipertensi & mobilitas terbatas (menggunakan tongkat jalan, butuh obat rutin Amlodipine)',
-          },
-          {
-            panggilan: 'Adik Rafa',
-            kelompok_umur: 'BALITA',
-            kebutuhan_khusus: 'Usia 2 tahun (butuh susu formula, popok, dan gendongan bayi saat evakuasi)',
-          },
-        ],
+  // Akun demo untuk juri. Di produksi hanya dibuat bila SEED_DEMO=true; password dari SEED_DEMO_PASSWORD.
+  const isProd = process.env.NODE_ENV === 'production';
+  const seedDemo = process.env.SEED_DEMO ? process.env.SEED_DEMO === 'true' : !isProd;
+  if (!seedDemo) {
+    console.log('Akun demo dilewati (SEED_DEMO bukan true).');
+  } else {
+    const demoPassword = process.env.SEED_DEMO_PASSWORD || (isProd ? randomBytes(12).toString('base64url') : 'demo1234');
+    if (!process.env.SEED_DEMO_PASSWORD && isProd) console.log(`Password akun demo acak: ${demoPassword}`);
+    const demoPasswordHash = await bcrypt.hash(demoPassword, 10);
+    const demoUser = await prisma.user.upsert({
+      where: { email: 'demo@siagakeluarga.id' },
+      update: {
+        nama: 'Keluarga Budi Santoso (Demo Bengkulu)',
+        password_hash: demoPasswordHash,
+        role: 'USER',
       },
-      emergency_plans: {
-        create: [
-          {
-            model_ai: 'gemini-2.5-flash',
-            konten: {
-              ringkasan_risiko:
-                'Rumah berada di Kecamatan Teluk Segara, Kota Bengkulu yang memiliki tingkat risiko TINGGI terhadap Gempa Bumi Megathrust dan Tsunami pesisir.',
-              titik_kumpul_utama: {
-                nama: 'Lapangan Merdeka Kota Bengkulu (View Tower)',
-                lat: -3.7888,
-                lng: 102.2512,
-                rute_evakuasi:
-                  'Keluar rumah menuju Jl. Jenderal Ahmad Yani ke arah dataran lebih tinggi menuju kawasan Lapangan Merdeka / View Tower (hindari jalur tepi Pantai Malabero).',
-              },
-              pembagian_tugas_keluarga: [
-                {
-                  anggota: 'Ayah Budi (DEWASA)',
-                  tugas:
-                    'Mematikan MCB listrik & katup gas LPG jika sempat (maks 10 detik), mengambil Tas Siaga Bencana, dan membantu memapah Nenek Rahma.',
-                },
-                {
-                  anggota: 'Ibu Sari (DEWASA)',
-                  tugas:
-                    'Menggendong Adik Rafa (BALITA) menggunakan gendongan depan agar kedua tangan tetap bebas untuk berlindung dan memegang tas perlengkapan bayi.',
-                },
-                {
-                  anggota: 'Nenek Rahma (LANSIA)',
-                  tugas:
-                    'Melindungi kepala dengan bantal saat guncangan, memakai alas kaki tertutup di dekat pintu, dan dievakuasi bersama Ayah Budi.',
-                },
-                {
-                  anggota: 'Adik Rafa (BALITA)',
-                  tugas: 'Berada dalam gendongan dan pengawasan penuh Ibu Sari menuju titik kumpul.',
-                },
-              ],
-              langkah_darurat_20_20_20: [
-                '20 Detik Gempa: Jika guncangan gempa berlangsung lebih dari 20 detik atau sangat kuat hingga sulit berdiri, jangan tunggu peringatan resmi.',
-                '20 Menit Waktu Evakuasi: Segera evakuasi mandiri bersama keluarga dalam waktu kurang dari 20 menit sebelum gelombang tsunami tiba di pesisir Bengkulu.',
-                '20 Meter Ketinggian: Menuju tempat evakuasi dengan ketinggian minimal 20 meter di atas permukaan laut atau menjauhi garis pantai.',
-              ],
-              kontak_darurat: [
-                { instansi: 'BPBD Kota Bengkulu', nomor: '112 / (0736) 21074' },
-                { instansi: 'Basarnas Bengkulu', nomor: '115 / (0736) 5500666' },
-                { instansi: 'PMI Kota Bengkulu', nomor: '(0736) 21118' },
-              ],
+      create: {
+        nama: 'Keluarga Budi Santoso (Demo Bengkulu)',
+        email: 'demo@siagakeluarga.id',
+        password_hash: demoPasswordHash,
+        role: 'USER',
+      },
+    });
+
+    const demoHousehold = await prisma.household.create({
+      data: {
+        user_id: demoUser.id,
+        region_id: regionTelukSegara.id,
+        lat: -3.7912,
+        lng: 102.2535,
+        share_token: 'demo-bengkulu-siagakeluarga-2026',
+        members: {
+          create: [
+            {
+              panggilan: 'Ayah Budi',
+              kelompok_umur: 'DEWASA',
+              kebutuhan_khusus: null,
             },
-          },
-        ],
+            {
+              panggilan: 'Ibu Sari',
+              kelompok_umur: 'DEWASA',
+              kebutuhan_khusus: 'Asma ringan (butuh inhaler cadangan di tas siaga)',
+            },
+            {
+              panggilan: 'Nenek Rahma',
+              kelompok_umur: 'LANSIA',
+              kebutuhan_khusus: 'Hipertensi & mobilitas terbatas (menggunakan tongkat jalan, butuh obat rutin Amlodipine)',
+            },
+            {
+              panggilan: 'Adik Rafa',
+              kelompok_umur: 'BALITA',
+              kebutuhan_khusus: 'Usia 2 tahun (butuh susu formula, popok, dan gendongan bayi saat evakuasi)',
+            },
+          ],
+        },
+        emergency_plans: {
+          create: [
+            {
+              model_ai: 'gemini-2.5-flash',
+              konten: {
+                ringkasan_risiko:
+                  'Rumah berada di Kecamatan Teluk Segara, Kota Bengkulu yang memiliki tingkat risiko TINGGI terhadap Gempa Bumi Megathrust dan Tsunami pesisir.',
+                titik_kumpul_utama: {
+                  nama: 'Lapangan Merdeka Kota Bengkulu (View Tower)',
+                  lat: -3.7888,
+                  lng: 102.2512,
+                  rute_evakuasi:
+                    'Keluar rumah menuju Jl. Jenderal Ahmad Yani ke arah dataran lebih tinggi menuju kawasan Lapangan Merdeka / View Tower (hindari jalur tepi Pantai Malabero).',
+                },
+                pembagian_tugas_keluarga: [
+                  {
+                    anggota: 'Ayah Budi (DEWASA)',
+                    tugas:
+                      'Mematikan MCB listrik & katup gas LPG jika sempat (maks 10 detik), mengambil Tas Siaga Bencana, dan membantu memapah Nenek Rahma.',
+                  },
+                  {
+                    anggota: 'Ibu Sari (DEWASA)',
+                    tugas:
+                      'Menggendong Adik Rafa (BALITA) menggunakan gendongan depan agar kedua tangan tetap bebas untuk berlindung dan memegang tas perlengkapan bayi.',
+                  },
+                  {
+                    anggota: 'Nenek Rahma (LANSIA)',
+                    tugas:
+                      'Melindungi kepala dengan bantal saat guncangan, memakai alas kaki tertutup di dekat pintu, dan dievakuasi bersama Ayah Budi.',
+                  },
+                  {
+                    anggota: 'Adik Rafa (BALITA)',
+                    tugas: 'Berada dalam gendongan dan pengawasan penuh Ibu Sari menuju titik kumpul.',
+                  },
+                ],
+                langkah_darurat_20_20_20: [
+                  '20 Detik Gempa: Jika guncangan gempa berlangsung lebih dari 20 detik atau sangat kuat hingga sulit berdiri, jangan tunggu peringatan resmi.',
+                  '20 Menit Waktu Evakuasi: Segera evakuasi mandiri bersama keluarga dalam waktu kurang dari 20 menit sebelum gelombang tsunami tiba di pesisir Bengkulu.',
+                  '20 Meter Ketinggian: Menuju tempat evakuasi dengan ketinggian minimal 20 meter di atas permukaan laut atau menjauhi garis pantai.',
+                ],
+                kontak_darurat: [
+                  { instansi: 'BPBD Kota Bengkulu', nomor: '112 / (0736) 21074' },
+                  { instansi: 'Basarnas Bengkulu', nomor: '115 / (0736) 5500666' },
+                  { instansi: 'PMI Kota Bengkulu', nomor: '(0736) 21118' },
+                ],
+              },
+            },
+          ],
+        },
+        kit_items: {
+          create: [
+            {
+              nama_item: 'Air Minum Kemasan & Makanan Siap Saji (Kebutuhan 3 Hari)',
+              status: true,
+              kadaluarsa: new Date('2027-06-30T00:00:00.000Z'),
+            },
+            {
+              nama_item: 'Kotak P3K, Obat Hipertensi Nenek Rahma & Inhaler Ibu Sari',
+              status: true,
+              kadaluarsa: new Date('2027-03-15T00:00:00.000Z'),
+            },
+            {
+              nama_item: 'Susu Formula, Popok & Perlengkapan Darurat Balita (Adik Rafa)',
+              status: true,
+              kadaluarsa: new Date('2027-01-20T00:00:00.000Z'),
+            },
+            {
+              nama_item: 'Dokumen Penting Keluarga (KK, KTP, Akta, Surat Tanah dalam Map Kedap Air)',
+              status: true,
+              kadaluarsa: null,
+            },
+            {
+              nama_item: 'Senter LED, Peluit Darurat, Powerbank & Radio Portabel Baterai',
+              status: false,
+              kadaluarsa: null,
+            },
+          ],
+        },
+        drills: {
+          create: [
+            {
+              jadwal: new Date('2026-12-01T09:00:00.000Z'),
+              skor: 85,
+            },
+          ],
+        },
       },
-      kit_items: {
-        create: [
-          {
-            nama_item: 'Air Minum Kemasan & Makanan Siap Saji (Kebutuhan 3 Hari)',
-            status: true,
-            kadaluarsa: new Date('2027-06-30T00:00:00.000Z'),
-          },
-          {
-            nama_item: 'Kotak P3K, Obat Hipertensi Nenek Rahma & Inhaler Ibu Sari',
-            status: true,
-            kadaluarsa: new Date('2027-03-15T00:00:00.000Z'),
-          },
-          {
-            nama_item: 'Susu Formula, Popok & Perlengkapan Darurat Balita (Adik Rafa)',
-            status: true,
-            kadaluarsa: new Date('2027-01-20T00:00:00.000Z'),
-          },
-          {
-            nama_item: 'Dokumen Penting Keluarga (KK, KTP, Akta, Surat Tanah dalam Map Kedap Air)',
-            status: true,
-            kadaluarsa: null,
-          },
-          {
-            nama_item: 'Senter LED, Peluit Darurat, Powerbank & Radio Portabel Baterai',
-            status: false,
-            kadaluarsa: null,
-          },
-        ],
-      },
-      drills: {
-        create: [
-          {
-            jadwal: new Date('2026-12-01T09:00:00.000Z'),
-            skor: 85,
-          },
-        ],
-      },
-    },
-  });
+    });
 
-  console.log(`✅ Akun Demo (demo@siagakeluarga.id) & Household (${demoHousehold.id}) berhasil dibuat.`);
+    console.log(`✅ Akun Demo (demo@siagakeluarga.id) & Household (${demoHousehold.id}) berhasil dibuat.`);
+  }
 
   // 4. Seed Potongan Panduan Resmi BNPB (GuideChunk)
   await prisma.guideChunk.createMany({

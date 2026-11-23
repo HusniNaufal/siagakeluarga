@@ -1,116 +1,141 @@
 import { useParams } from "react-router-dom";
 import { useShareCard } from "@/hooks/useShare";
-import { TopoBackground } from "@/components/layout/TopoBackground";
+import { NOMOR_UTAMA } from "@/content/kontak";
 
-const FALLBACK_TASKS: { anggota?: string; tugas?: string; peran?: string }[] = [
-  {
-    anggota: "Tugas Budi (Ayah)",
-    tugas: "Mematikan listrik dan gas, lalu membawa dokumen penting keluarga.",
-  },
-  {
-    anggota: "Tugas Sari (Ibu)",
-    tugas: "Mendampingi Raka dan memastikan obat Nenek Aminah terbawa.",
-  },
-  {
-    anggota: "Tugas untuk Nenek Aminah",
-    tugas:
-      "Dievakuasi lebih dulu dengan bantuan kursi roda, obat rutin dibawakan Sari.",
-  },
-];
+const UMUR: Record<string, string> = {
+  BALITA: "Balita",
+  ANAK: "Anak",
+  DEWASA: "Dewasa",
+  LANSIA: "Lansia",
+};
+
+function jarakLabel(km: number | null | undefined) {
+  if (km == null) return null;
+  return km < 1 ? `${Math.round(km * 1000)} m dari rumah` : `${km.toFixed(1)} km dari rumah`;
+}
 
 export function Bagikan() {
   const { token } = useParams();
-  const { data: card, isLoading } = useShareCard(token);
+  const { data: card, isLoading, isError } = useShareCard(token);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-sm text-[#475569]">
+      <div className="flex min-h-screen items-center justify-center bg-white text-[16px] text-[#475569]">
         Memuat rencana...
       </div>
     );
   }
 
-  const keluargaNama = card?.keluarga || "Keluarga Pratama";
-  const titikUtama =
-    card?.titik_kumpul?.[0]?.nama || "Aula Masjid Agung Dayeuhkolot";
-  const tugasList =
-    card?.rencana_evakuasi?.konten?.pembagian_tugas_keluarga?.length
-      ? card.rencana_evakuasi.konten.pembagian_tugas_keluarga
-      : FALLBACK_TASKS;
+  if (isError || !card) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-[390px] flex-col justify-center px-5">
+        <h1 className="text-[24px] font-bold text-[#0B2545]">Rencana tidak ditemukan</h1>
+        <p className="mt-2 text-[16px] leading-[1.5] text-[#475569]">
+          Tautan ini salah atau sudah diganti oleh pemiliknya. Minta tautan terbaru ke anggota keluarga
+          yang membagikannya.
+        </p>
+        <a
+          href={`tel:${NOMOR_UTAMA.nomor}`}
+          className="mt-6 flex h-[56px] items-center justify-center rounded-full bg-[#DC2626] text-[18px] font-bold text-white"
+        >
+          ☎ Telepon {NOMOR_UTAMA.nomor}
+        </a>
+      </div>
+    );
+  }
+
+  const konten = card.rencana_evakuasi?.konten;
+  const titik = card.titik_kumpul?.[0];
+  const tugas = konten?.pembagian_tugas_keluarga ?? [];
+  const catatan = card.anggota.filter((a) => a.kebutuhan_khusus);
 
   return (
-    /* Rencana Publik (Mobile) — persis siagakeluarga.fig Node 3785..3815 */
     <div className="relative mx-auto min-h-screen max-w-[390px] overflow-hidden bg-white px-5 py-6">
-      <TopoBackground variant="light" />
 
       <div className="relative z-10">
-        <p className="text-[12px] text-[#475569]">
-          Rencana darurat (hanya baca)
-        </p>
-        <h1 className="mt-1 text-[28px] leading-tight font-bold text-[#0F172A]">
-          {keluargaNama}
-        </h1>
-
-        {/* Ringkasan Risiko (Node 3791) */}
-        <div className="mt-5 rounded-[20px] bg-[#F4F1EA] p-5">
-          <p className="text-[20px] font-bold text-[#92400E]">
-            ⚠ Waspada banjir
+        <p className="text-[13px] text-[#475569]">Rencana darurat (hanya baca)</p>
+        <h1 className="mt-1 text-[28px] leading-tight font-bold text-[#0B2545]">{card.keluarga}</h1>
+        {card.lokasi && (
+          <p className="mt-1 text-[15px] text-[#475569]">
+            Kec. {card.lokasi.kecamatan}, {card.lokasi.kab_kota}
           </p>
-          <p className="mt-2 text-[17px] leading-[1.35] text-[#92400E]">
-            {card?.rencana_evakuasi?.konten?.ringkasan_risiko ??
-              "Hujan lebat diperkirakan sore ini di Dayeuhkolot."}
+        )}
+
+        <div className="mt-5 rounded-[20px] bg-[#F1F5F9] p-5">
+          <p className="text-[13px] text-[#9A3412]">Ringkasan risiko</p>
+          <p className="mt-2 text-[17px] leading-[1.4] text-[#0B2545]">
+            {konten?.ringkasan_risiko ??
+              (card.zona_risiko.length
+                ? `Wilayah ini rawan: ${card.zona_risiko
+                    .map((z) => `${z.jenis_bencana.toLowerCase().replace("_", " ")} (${z.tingkat.toLowerCase()})`)
+                    .join(", ")}.`
+                : "Belum ada ringkasan risiko untuk wilayah ini.")}
           </p>
         </div>
 
-        {/* Titik Kumpul (Node 3794) */}
-        <div className="mt-3.5 rounded-[20px] bg-[#F4F1EA] p-5">
-          <p className="text-[12px] text-[#C2410C]">Titik kumpul</p>
-          <p className="mt-1.5 text-[18px] leading-[1.25] font-bold text-[#0F172A]">
-            {titikUtama}
-          </p>
-          <p className="mt-1 text-[16px] text-[#475569]">400 meter dari rumah</p>
+        <div className="mt-3.5 rounded-[20px] bg-[#F1F5F9] p-5">
+          <p className="text-[13px] text-[#C2410C]">Titik kumpul</p>
+          {titik ? (
+            <>
+              <p className="mt-1.5 text-[19px] leading-[1.25] font-bold text-[#0B2545]">{titik.nama}</p>
+              {jarakLabel(titik.jarak_km) && (
+                <p className="mt-1 text-[16px] text-[#475569]">{jarakLabel(titik.jarak_km)}</p>
+              )}
+            </>
+          ) : (
+            <p className="mt-1.5 text-[16px] leading-[1.4] text-[#475569]">
+              Belum ada titik kumpul tercatat. Tanyakan ke pemilik rencana.
+            </p>
+          )}
         </div>
 
-        {/* Tugasmu (Node 3798, 3801, 3804) */}
         <div className="mt-3.5 space-y-2.5">
-          {tugasList.map((t, i) => {
-            const label = t.anggota?.startsWith("Tugas")
-              ? t.anggota
-              : `Tugas ${t.anggota}`;
-            return (
-              <div
-                key={i}
-                className="rounded-[14px] border border-[#E2E8F0] bg-white px-4 py-3.5"
-              >
-                <p className="text-[12px] text-[#475569]">{label}</p>
-                <p className="mt-1 text-[16px] leading-[1.3] font-medium text-[#0F172A]">
-                  {t.tugas ?? t.peran}
-                </p>
-              </div>
-            );
-          })}
+          {tugas.length > 0
+            ? tugas.map((t, i) => (
+                <div key={i} className="rounded-[14px] border border-[#E2E8F0] bg-white px-4 py-3.5">
+                  <p className="text-[13px] text-[#475569]">Tugas {t.anggota ?? `anggota ${i + 1}`}</p>
+                  <p className="mt-1 text-[17px] leading-[1.35] font-medium text-[#0B2545]">
+                    {t.tugas ?? t.peran}
+                  </p>
+                </div>
+              ))
+            : card.anggota.map((a) => (
+                <div key={a.panggilan} className="rounded-[14px] border border-[#E2E8F0] bg-white px-4 py-3.5">
+                  <p className="text-[17px] font-semibold text-[#0B2545]">
+                    {a.panggilan} <span className="text-[14px] font-normal text-[#475569]">({UMUR[a.kelompok_umur]})</span>
+                  </p>
+                </div>
+              ))}
         </div>
 
-        {/* Tombol Telepon 112 (Node 3807) */}
+        {catatan.length > 0 && (
+          <div className="mt-3.5 rounded-[20px] bg-[#F1F5F9] p-5">
+            <p className="text-[13px] text-[#475569]">Catatan khusus</p>
+            {catatan.map((a) => (
+              <p key={a.panggilan} className="mt-2 text-[16px] leading-[1.4] text-[#0B2545]">
+                <span className="font-semibold">{a.panggilan}:</span> {a.kebutuhan_khusus}
+              </p>
+            ))}
+          </div>
+        )}
+
         <a
-          href="tel:112"
+          href={`tel:${NOMOR_UTAMA.nomor}`}
           className="mt-5 flex h-[64px] w-full items-center justify-center rounded-full bg-[#DC2626] text-[20px] font-bold text-white"
         >
-          ☎ Telepon 112
+          ☎ Telepon {NOMOR_UTAMA.nomor}
         </a>
 
-        {/* Unduh sebagai PDF (Node 3809) */}
         <button
           type="button"
           onClick={() => window.print()}
-          className="mt-3.5 block w-full text-center text-[15px] font-semibold text-[#C2410C]"
+          className="mt-3.5 block min-h-11 w-full text-center text-[15px] font-semibold text-[#C2410C]"
         >
-          Unduh sebagai PDF
+          Cetak atau simpan sebagai PDF
         </button>
 
-        {/* Footer Credit (Node 3812) */}
         <div className="mt-6 text-center text-[12px] text-[#475569]">
-          <p>Data cuaca BMKG &amp; data bencana BNPB</p>
+          <p>Saat kejadian, ikuti arahan BPBD dan petugas di tempat.</p>
           <p className="mt-1 font-medium">Dibuat dengan SiagaKeluarga</p>
         </div>
       </div>

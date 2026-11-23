@@ -9,7 +9,7 @@ const show = async (label, res) => {
 };
 const login = await show('POST /auth/login', await fetch(`${base}/auth/login`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'demo@siagakeluarga.id', password: 'demo1234' }),
+  body: JSON.stringify({ email: 'demo@siagakeluarga.id', password: process.env.DEMO_PASSWORD ?? 'demo1234' }),
 }));
 const auth = { Authorization: `Bearer ${login.data.token}` };
 await show('GET /auth/me', await fetch(`${base}/auth/me`, { headers: auth }));

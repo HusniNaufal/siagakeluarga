@@ -144,6 +144,14 @@ export type BmkgForecast =
       lokasi: { desa: string; kecamatan: string; kotkab: string; provinsi: string } | null;
       saat_ini: BmkgForecastEntry;
       prakiraan: BmkgForecastEntry[];
+      diperbarui?: string | null;
+      /** Ambang buatan aplikasi, bukan peringatan dini resmi BMKG. */
+      status?: {
+        tingkat: "aman" | "waspada" | "bahaya";
+        waktu_lokal: string | null;
+        cuaca: string | null;
+        curah_hujan_mm: number | null;
+      };
     }
   | {
       tersedia: false;

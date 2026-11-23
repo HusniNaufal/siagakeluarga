@@ -1,135 +1,141 @@
-import { Reveal } from "@/components/motion/Reveal";
-import { TopoBackground } from "@/components/layout/TopoBackground";
+import { Link } from "react-router-dom";
+import { motion } from "motion/react";
+import { useReveal } from "@/components/motion/Reveal";
+import { ArrowUpRight, Mountain, Siren, Waves, Wind, Activity } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+interface Hazard {
+  jenis: string;
+  title: string;
+  text: string;
+  color: string;
+  Icon: LucideIcon;
+}
+
+const BANJIR: Hazard = {
+  jenis: "BANJIR",
+  title: "Banjir",
+  text: "Kapan pindah, ke mana berjalan, dan apa yang tidak boleh dinyalakan saat air menggenang. Bencana yang paling sering menimpa rumah keluarga di sini.",
+  color: "#1d4ed8",
+  Icon: Waves,
+};
+
+const OTHERS: Hazard[] = [
+  {
+    jenis: "GEMPA",
+    title: "Gempa",
+    text: "Lindungi kepala lebih dulu. Keluar ke titik kumpul setelah guncangan berhenti.",
+    color: "#b91c1c",
+    Icon: Activity,
+  },
+  {
+    jenis: "LONGSOR",
+    title: "Longsor",
+    text: "Perhatikan retakan tanah dan lereng di belakang rumah sebelum hujan panjang.",
+    color: "#a16207",
+    Icon: Mountain,
+  },
+  {
+    jenis: "CUACA_EKSTREM",
+    title: "Cuaca ekstrem",
+    text: "Angin kencang dan hujan lebat: apa yang dikunci, dan siapa yang dicek kabarnya.",
+    color: "#0f766e",
+    Icon: Wind,
+  },
+  {
+    jenis: "TSUNAMI",
+    title: "Tsunami",
+    text: "Naik ke tempat tinggi yang sudah disepakati. Jangan menunggu air terlihat.",
+    color: "#0e7490",
+    Icon: Siren,
+  },
+];
+
+const MotionLink = motion.create(Link);
 
 export function Fitur() {
+  const reveal = useReveal({ hover: true });
   return (
-    <section
-      id="fitur"
-      className="relative overflow-hidden bg-white px-6 py-24 md:px-[100px] md:py-36"
-    >
-      <TopoBackground variant="light" />
+    <section id="fitur" className="scroll-mt-20 bg-paper py-20 md:py-28">
+      <div className="shell">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-[680px]">
+            <h2 className="t-h2 text-ink">
+              Lima bencana, langkahnya tidak sama.
+            </h2>
+            <p className="mt-4 t-lead text-ink-3">
+              Tiap panduan dibagi tiga: sebelum, saat, dan sesudah. Langkah yang
+              cocok bisa langsung dimasukkan ke rencana keluarga.
+            </p>
+          </div>
+          <Link
+            to="/panduan"
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.99]"
+          >
+            Buka semua panduan
+            <ArrowUpRight className="size-4" aria-hidden="true" />
+          </Link>
+        </div>
 
-      <div className="relative z-10 mx-auto max-w-[1240px]">
-        <Reveal>
-          <p className="text-[13px] font-normal text-[#C2410C]">Fitur</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-[-0.025em] text-[#0F172A] md:text-[40px] md:leading-[1.15]">
-            Fitur utama
-          </h2>
-        </Reveal>
-
-        {/* Grid 4 Kartu Fitur — Editorial Compact (persis siagakeluarga.fig Node 761..801) */}
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Card 1 — Rencana darurat AI (Node 762) */}
-          <Reveal delay={0}>
-            <div className="flex h-[274px] flex-col gap-3.5 rounded-[20px] border border-[#E2E8F0] bg-white p-4">
-              <div className="relative h-[152px] w-full overflow-hidden rounded-[12px] bg-[#F4F1EA]">
-                <img
-                  src="/images/map-dayeuhkolot.webp"
-                  alt="Peta Rencana Darurat AI"
-                  className="h-full w-full object-cover"
-                />
-                {/* Garis jalan putih & rute oranye sesuai Node 764..768 */}
-                <div className="pointer-events-none absolute inset-x-0 top-[68px] h-2 bg-white" />
-                <div className="pointer-events-none absolute inset-y-0 left-[108px] w-2 bg-white" />
-                <div className="pointer-events-none absolute inset-y-0 left-[210px] w-2 bg-white" />
-                <svg
+        <div className="mt-12 grid gap-4 lg:grid-cols-[1.15fr_1fr_1fr]">
+          <MotionLink
+            {...reveal(0)}
+            to={`/panduan/${BANJIR.jenis}`}
+            className="group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[28px] bg-night p-7 text-white lg:row-span-2"
+          >
+            <img
+              src="/images/evakuasi-perahu.webp"
+              alt=""
+              loading="lazy"
+              className="foto absolute inset-0 size-full object-cover object-[72%_50%] transition-transform duration-700 group-hover:scale-[1.03]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-night via-night/50 to-transparent" />
+            <div className="relative">
+              <span className="inline-flex size-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
+                <BANJIR.Icon className="size-5" strokeWidth={1.6} aria-hidden="true" />
+              </span>
+              <h3 className="mt-5 text-[30px] leading-none font-semibold tracking-[-0.025em]">
+                {BANJIR.title}
+              </h3>
+              <p className="mt-3 max-w-[44ch] text-[16px] leading-[1.6] text-white/85">
+                {BANJIR.text}
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-[15px] font-semibold">
+                Baca panduan
+                <ArrowUpRight
+                  className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                   aria-hidden="true"
-                  viewBox="0 0 262 152"
-                  className="pointer-events-none absolute inset-0 h-full w-full"
-                >
-                  <path
-                    d="M46 112 C95 112, 145 38, 214 38"
-                    fill="none"
-                    stroke="#C2410C"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                  <circle cx="214" cy="38" r="6" fill="#C2410C" />
-                </svg>
-              </div>
-              <h3 className="text-[17px] font-semibold text-[#0B2545]">
-                Rencana darurat AI
-              </h3>
-              <p className="text-[13px] leading-[1.45] text-[#475569]">
-                Titik kumpul, jalur evakuasi, dan tugas tiap anggota.
-              </p>
+                />
+              </span>
             </div>
-          </Reveal>
+          </MotionLink>
 
-          {/* Card 2 — Cuaca & risiko BMKG (Node 771) */}
-          <Reveal delay={0.06}>
-            <div className="flex h-[274px] flex-col gap-3.5 rounded-[20px] bg-[#0B2545] p-4">
-              <div className="flex h-[152px] flex-col justify-between rounded-[12px] bg-[#13345D] p-4 text-white">
-                <p className="text-[11px] font-normal text-[#FB923C]">
-                  Dayeuhkolot, 15:00 WIB
-                </p>
-                <p className="text-[34px] leading-none font-semibold text-white">
-                  24°C
-                </p>
-                <div className="flex h-[34px] items-end gap-2">
-                  <div className="h-[14px] flex-1 rounded-[3px] bg-[#1D4ED8]/55" />
-                  <div className="h-[22px] flex-1 rounded-[3px] bg-[#1D4ED8]/75" />
-                  <div className="h-[34px] flex-1 rounded-[3px] bg-[#C2410C]" />
-                  <div className="h-[18px] flex-1 rounded-[3px] bg-[#1D4ED8]/55" />
-                </div>
-              </div>
-              <h3 className="text-[17px] font-semibold text-white">
-                Cuaca &amp; risiko BMKG
+          {OTHERS.map((item, i) => (
+            <MotionLink
+              {...reveal(i + 1)}
+              key={item.jenis}
+              to={`/panduan/${item.jenis}`}
+              className="group flex flex-col rounded-[24px] border border-line bg-base p-6 transition-colors hover:border-ink/25"
+            >
+              <span
+                className="inline-flex size-11 items-center justify-center rounded-full text-white"
+                style={{ backgroundColor: item.color }}
+              >
+                <item.Icon className="size-5" strokeWidth={1.6} aria-hidden="true" />
+              </span>
+              <h3 className="mt-5 text-[22px] leading-none font-semibold tracking-[-0.02em] text-ink">
+                {item.title}
               </h3>
-              <p className="text-[13px] leading-[1.45] text-[#CBD5E1]">
-                Prakiraan 3 hari diperbarui otomatis setiap 3 jam.
-              </p>
-            </div>
-          </Reveal>
-
-          {/* Card 3 — Tas siaga keluarga (Node 782) */}
-          <Reveal delay={0.12}>
-            <div className="flex h-[274px] flex-col gap-3.5 rounded-[20px] border border-[#E2E8F0] bg-white p-4">
-              <div className="flex h-[152px] flex-col justify-center gap-2.5 rounded-[12px] bg-[#F4F1EA] p-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="size-4 shrink-0 rounded-[4px] bg-[#C2410C]" />
-                  <span className="truncate text-[12px] font-medium text-[#0F172A]">
-                    Dokumen kedap air
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className="size-4 shrink-0 rounded-[4px] bg-[#C2410C]" />
-                  <span className="truncate text-[12px] font-medium text-[#0F172A]">
-                    Obat Nenek Aminah (7 hr)
-                  </span>
-                </div>
-                <div className="mt-1 h-[6px] w-full overflow-hidden rounded-[3px] bg-[#E2E8F0]">
-                  <div className="h-full w-[73%] rounded-[3px] bg-[#0F766E]" />
-                </div>
-              </div>
-              <h3 className="text-[17px] font-semibold text-[#0B2545]">
-                Tas siaga keluarga
-              </h3>
-              <p className="text-[13px] leading-[1.45] text-[#475569]">
-                Checklist sesuai anggota beserta pengingat kedaluwarsa.
-              </p>
-            </div>
-          </Reveal>
-
-          {/* Card 4 — Tanya AI darurat (Node 794) */}
-          <Reveal delay={0.18}>
-            <div className="flex h-[274px] flex-col gap-3.5 rounded-[20px] border border-[#E2E8F0] bg-white p-4">
-              <div className="flex h-[152px] flex-col justify-center gap-2.5 rounded-[12px] bg-[#F4F1EA] p-3.5">
-                <div className="rounded-[10px] bg-[#0B2545] px-2.5 py-2 text-[11px] font-normal text-white">
-                  Evakuasi lansia saat air naik?
-                </div>
-                <div className="rounded-[10px] border border-[#E2E8F0] bg-white px-2.5 py-2 text-[11px] leading-snug text-[#0F172A]">
-                  Evakuasi sebelum 20 cm via Jl. Raya Dayeuhkolot.
-                </div>
-              </div>
-              <h3 className="text-[17px] font-semibold text-[#0B2545]">
-                Tanya AI darurat
-              </h3>
-              <p className="text-[13px] leading-[1.45] text-[#475569]">
-                Panduan cepat berbasis modul resmi BNPB.
-              </p>
-            </div>
-          </Reveal>
+              <p className="mt-3 flex-1 text-[15px] leading-[1.6] text-ink-3">{item.text}</p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-[15px] font-semibold text-ink">
+                Baca panduan
+                <ArrowUpRight
+                  className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  aria-hidden="true"
+                />
+              </span>
+            </MotionLink>
+          ))}
         </div>
       </div>
     </section>
