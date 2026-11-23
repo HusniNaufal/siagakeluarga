@@ -107,7 +107,7 @@ node scripts/smoke-test.mjs
 
 ## Ringkasan Endpoint API
 
-Base URL lokal: `http://localhost:3000/api` | Base URL produksi: `https://<domain-vercel>/api`
+Base URL lokal: `http://localhost:3000/api` | Base URL produksi: `https://siagakeluarga.vercel.app/`
 
 ### Sistem & Kesehatan Server
 - `GET /api/health` — *Health check* status server & uptime ping
