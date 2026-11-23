@@ -9,8 +9,8 @@ Dokumen ini merupakan referensi kontrak REST API aktual berdasarkan implementasi
 Seluruh route backend dipasang pada prefix `/api` di `backend/src/app.js` (`app.use('/api', routes)`).
 
 - **Aturan `VITE_API_URL` di frontend:** isi dengan **origin backend tanpa trailing slash (`/`) dan tanpa suffix `/api`**.
-  - Lokal: `VITE_API_URL=http://localhost:3000`
-  - Produksi (Vercel): `VITE_API_URL=https://<domain-backend>.vercel.app`
+  - Lokal: `VITE_API_URL=[http://localhost:3000]`
+  - Produksi (Vercel): `VITE_API_URL=https://siagakeluarga.vercel.app/`
 - **Format pemanggilan endpoint:** `${VITE_API_URL}/api/<endpoint>` (contoh: `${VITE_API_URL}/api/auth/login`).
 - **Format data:** seluruh request body dan response menggunakan `Content-Type: application/json`.
 
