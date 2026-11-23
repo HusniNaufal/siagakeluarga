@@ -4,7 +4,6 @@ import {
   AnimatePresence,
   motion,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
@@ -34,12 +33,10 @@ function ChapterLayer({
   chapter,
   index,
   scrollYProgress,
-  reduce,
 }: {
   chapter: (typeof CHAPTERS)[number];
   index: number;
   scrollYProgress: MotionValue<number>;
-  reduce: boolean | null;
 }) {
   const start = index / N;
   const end = (index + 1) / N;
@@ -54,17 +51,17 @@ function ChapterLayer({
   if (chapter.key === "hujan") {
     return (
       <motion.div
-        className="pointer-events-none absolute inset-0 overflow-hidden bg-night/35"
-        style={{ opacity: reduce ? 1 : opacity }}
+        className="pointer-events-none absolute inset-0 z-10 overflow-hidden bg-night/35"
+        style={{ opacity }}
       >
         <svg
           viewBox="0 0 1440 900"
-          className="absolute inset-0 h-full w-full pointer-events-none"
+          className="pointer-events-none absolute inset-0 h-full w-full"
           preserveAspectRatio="xMidYMid slice"
         >
-          {Array.from({ length: 20 }).map((_, idx) => {
-            const x1 = 200 + ((idx * 65) % 1100);
-            const y1 = 60 + ((idx * 85) % 700);
+          {Array.from({ length: 24 }).map((_, idx) => {
+            const x1 = 150 + ((idx * 65) % 1200);
+            const y1 = 40 + ((idx * 85) % 750);
             return (
               <line
                 key={idx}
@@ -73,8 +70,8 @@ function ChapterLayer({
                 x2={x1 - 12}
                 y2={y1 + 55}
                 stroke="#E2E8F0"
-                strokeOpacity="0.32"
-                strokeWidth="1.5"
+                strokeOpacity="0.4"
+                strokeWidth="1.8"
                 strokeLinecap="round"
               />
             );
@@ -88,81 +85,77 @@ function ChapterLayer({
   if (chapter.key === "badai") {
     return (
       <motion.div
-        className="pointer-events-none absolute inset-0 overflow-hidden bg-night/65"
-        style={{ opacity: reduce ? 1 : opacity }}
+        className="pointer-events-none absolute inset-0 z-10 overflow-hidden bg-night/70"
+        style={{ opacity }}
       >
         {/* Glow langit saat badai */}
         <div
           className="pointer-events-none absolute top-[-50px] left-1/2 h-[750px] w-[950px] -translate-x-1/2 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(147, 197, 253, 0.28) 0%, rgba(59, 130, 246, 0.08) 45%, transparent 70%)",
+              "radial-gradient(circle, rgba(147, 197, 253, 0.38) 0%, rgba(59, 130, 246, 0.15) 50%, transparent 70%)",
           }}
         />
 
-        {/* Sambaran Kilat Petir Realistis & Cahaya Layar (Flash) */}
-        {!reduce && (
-          <>
-            <motion.div
-              className="absolute inset-0 bg-white"
-              animate={{ opacity: [0, 0, 0.28, 0.04, 0.38, 0, 0, 0.16, 0] }}
-              transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8 }}
-            />
+        {/* Cahaya Layar Berkedip (Screen Lightning Flash) */}
+        <motion.div
+          className="pointer-events-none absolute inset-0 bg-white/25"
+          animate={{ opacity: [0, 0.45, 0.08, 0.6, 0.05, 0, 0, 0.3, 0] }}
+          transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 0.8 }}
+        />
 
-            <svg
-              viewBox="0 0 1440 900"
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              {/* Kilat Utama */}
-              <motion.path
-                d="M 748 40 L 730 142 L 758 148 L 732 260 L 760 268 L 720 390 L 738 395 L 710 490"
-                fill="none"
-                stroke="#F0F9FF"
-                strokeWidth="2.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="drop-shadow(0 0 10px rgba(186, 230, 253, 0.95))"
-                animate={{ opacity: [0, 0, 1, 0.15, 1, 0, 0, 0.75, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8 }}
-              />
-              {/* Cabang Kilat 1 */}
-              <motion.path
-                d="M 732 260 L 700 310 L 712 318 L 685 370"
-                fill="none"
-                stroke="#BAE6FD"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                filter="drop-shadow(0 0 6px rgba(186, 230, 253, 0.8))"
-                animate={{ opacity: [0, 0, 0.9, 0.1, 0.85, 0, 0, 0.6, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8 }}
-              />
-              {/* Kilat Samping Kanan */}
-              <motion.path
-                d="M 988 30 L 974 114 L 996 120 L 972 220 L 990 228 L 968 320"
-                fill="none"
-                stroke="#BAE6FD"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="drop-shadow(0 0 8px rgba(147, 197, 253, 0.85))"
-                animate={{ opacity: [0, 0, 0.95, 0.1, 0.9, 0, 0, 0.5, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8, delay: 0.05 }}
-              />
-              {/* Kilat Samping Kiri */}
-              <motion.path
-                d="M 410 60 L 430 135 L 412 142 L 428 220"
-                fill="none"
-                stroke="#E0F2FE"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                filter="drop-shadow(0 0 6px rgba(224, 242, 254, 0.75))"
-                animate={{ opacity: [0, 0, 0, 0, 0.85, 0, 0.4, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8, delay: 0.12 }}
-              />
-            </svg>
-          </>
-        )}
+        <svg
+          viewBox="0 0 1440 900"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          {/* Kilat Utama - selalu menyala dengan kilau neon dan pulse */}
+          <motion.path
+            d="M 748 40 L 730 142 L 758 148 L 732 260 L 760 268 L 720 390 L 738 395 L 710 490"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter="drop-shadow(0 0 12px #38bdf8) drop-shadow(0 0 25px #0284c7)"
+            animate={{ opacity: [0.9, 1, 0.4, 1, 0.85, 0.3, 1] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          {/* Cabang Kilat 1 */}
+          <motion.path
+            d="M 732 260 L 700 310 L 712 318 L 685 370"
+            fill="none"
+            stroke="#BAE6FD"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            filter="drop-shadow(0 0 8px #38bdf8)"
+            animate={{ opacity: [0.8, 1, 0.2, 0.9, 0.3, 1] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.1 }}
+          />
+          {/* Kilat Samping Kanan */}
+          <motion.path
+            d="M 988 30 L 974 114 L 996 120 L 972 220 L 990 228 L 968 320"
+            fill="none"
+            stroke="#BAE6FD"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter="drop-shadow(0 0 10px #38bdf8)"
+            animate={{ opacity: [0.75, 1, 0.3, 0.85, 0.2, 0.9] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+          />
+          {/* Kilat Samping Kiri */}
+          <motion.path
+            d="M 410 60 L 430 135 L 412 142 L 428 220"
+            fill="none"
+            stroke="#E0F2FE"
+            strokeWidth="2"
+            strokeLinecap="round"
+            filter="drop-shadow(0 0 8px #7dd3fc)"
+            animate={{ opacity: [0.6, 0.9, 0.1, 0.8, 0.2, 0.85] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+          />
+        </svg>
       </motion.div>
     );
   }
@@ -261,7 +254,6 @@ function ChapterCopy({ index }: { index: number }) {
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
   const [chapterIndex, setChapterIndex] = useState(0);
 
   const { scrollYProgress } = useScroll({
@@ -280,19 +272,18 @@ export function Hero() {
 
   const chapter = CHAPTERS[chapterIndex];
 
-
   return (
     <section
       ref={ref}
       className="relative"
-      style={{ height: reduce ? "100svh" : `${N * 100}vh` }}
+      style={{ height: `${N * 100}vh` }}
     >
       <div className="sticky top-0 h-svh w-full overflow-hidden bg-night">
         <HeroFrames progress={videoProgress} className="absolute inset-0 size-full" />
 
         {/* Foto "aman" menutup video pada babak terakhir. */}
-        <motion.div className="absolute inset-0" style={{ opacity: reduce ? 0 : amanOpacity }}>
-          <motion.picture className="block size-full" style={{ scale: reduce ? 1 : amanScale }}>
+        <motion.div className="absolute inset-0" style={{ opacity: amanOpacity }}>
+          <motion.picture className="block size-full" style={{ scale: amanScale }}>
             <source media="(max-width: 767px)" srcSet="/hero/aman-m.webp" />
             <img src="/hero/aman.webp" alt="" className="size-full object-cover object-[35%_50%]" />
           </motion.picture>
@@ -301,7 +292,7 @@ export function Hero() {
         {/* Scrim: teks selalu putih, jadi latar foto digelapkan dari kiri. */}
         <motion.div
           className="pointer-events-none absolute inset-0"
-          style={{ opacity: reduce ? 0.85 : scrimOpacity }}
+          style={{ opacity: scrimOpacity }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-night via-night/55 to-transparent md:via-night/30" />
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-night/70 to-transparent" />
@@ -313,11 +304,10 @@ export function Hero() {
             chapter={item}
             index={i}
             scrollYProgress={scrollYProgress}
-            reduce={reduce}
           />
         ))}
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-[1240px] flex-col justify-center px-5 md:px-8">
+        <div className="relative z-20 mx-auto flex h-full w-full max-w-[1240px] flex-col justify-center px-5 md:px-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={chapter.key}
