@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CloudRain, LocateFixed, MapPin, Search } from "lucide-react";
 import { StatusMark } from "@/components/ui/StatusMark";
 import { Gelombang } from "@/components/ui/Grafis";
+import { TopoBackground } from "@/components/layout/TopoBackground";
 import { EmptyIllustration } from "@/components/ui/EmptyIllustration";
 import type { ReactNode } from "react";
 import { ApiError } from "@/lib/api";
@@ -277,9 +278,10 @@ export function DataBmkgLive() {
     : null;
 
   return (
-    <section id="data-bmkg" className="relative scroll-mt-20 bg-night py-20 text-white md:py-28">
+    <section id="data-bmkg" className="relative scroll-mt-20 overflow-hidden bg-night py-20 text-white md:py-28">
+      <TopoBackground variant="dark" className="opacity-[0.25]" />
       <Gelombang className="absolute inset-x-0 top-0 -translate-y-[calc(100%-1px)] text-night" />
-      <div className="shell">
+      <div className="shell relative z-10">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16">
           <WordRevealHeading className="t-h2 text-white" scrub={false} duration={0.6} stagger={0.13}>
             Cuaca dibaca di kelurahan rumahmu, bukan di kota secara umum.

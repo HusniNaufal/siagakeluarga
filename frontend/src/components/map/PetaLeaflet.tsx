@@ -34,6 +34,17 @@ function PasPetaKeTitik({ titik }: { titik: TitikPeta[] }) {
   return null;
 }
 
+function PerbaruiUkuran({ tinggi }: { tinggi: number | string }) {
+  const map = useMap();
+  useEffect(() => {
+    const t = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+    return () => clearTimeout(t);
+  }, [map, tinggi]);
+  return null;
+}
+
 function PilihDiPeta({ onPilih }: { onPilih: (lat: number, lng: number) => void }) {
   useMapEvents({ click: (e) => onPilih(Number(e.latlng.lat.toFixed(5)), Number(e.latlng.lng.toFixed(5))) });
   return null;
@@ -47,22 +58,26 @@ export function PetaLeaflet({
   titik,
   onPilih,
   className,
-  tinggi = 320,
+  tinggi = 360,
 }: {
   titik: TitikPeta[];
   onPilih?: (lat: number, lng: number) => void;
   className?: string;
-  tinggi?: number;
+  tinggi?: number | string;
 }) {
   // Pusat awal: titik pertama, atau tengah Kota Bengkulu (wilayah percontohan) bila belum ada titik.
   const pusat: [number, number] = titik[0] ? [titik[0].lat, titik[0].lng] : [-3.7956, 102.2592];
   return (
-    <div className={cn("overflow-hidden rounded-2xl border border-line", className)} style={{ height: tinggi }}>
+    <div
+      className={cn("overflow-hidden rounded-2xl border border-line", className)}
+      style={{ height: typeof tinggi === "number" ? `${tinggi}px` : tinggi }}
+    >
       <MapContainer center={pusat} zoom={titik.length ? 15 : 12} scrollWheelZoom={false} className="size-full" aria-label="Peta">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <PerbaruiUkuran tinggi={tinggi} />
         <PasPetaKeTitik titik={titik} />
         {onPilih && <PilihDiPeta onPilih={onPilih} />}
         {titik.map((t) => (

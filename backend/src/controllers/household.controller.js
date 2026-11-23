@@ -44,9 +44,19 @@ export const updateHousehold = async (req, res, next) => {
     const updated = await prisma.household.update({
       where: { id: household.id },
       data,
-      include: { region: true },
+      include: {
+        region: true,
+        members: true,
+        kit_items: true,
+        drills: { orderBy: { jadwal: 'desc' } },
+        emergency_plans: { orderBy: { created_at: 'desc' }, take: 1 },
+      },
     });
-    res.json({ success: true, message: 'Data keluarga berhasil diperbarui', data: updated });
+    res.json({
+      success: true,
+      message: 'Data keluarga berhasil diperbarui',
+      data: { ...updated, kesiapan_tas: kitReadiness(updated.kit_items || []) },
+    });
   } catch (err) {
     next(err);
   }

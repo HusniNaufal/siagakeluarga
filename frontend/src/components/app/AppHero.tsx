@@ -21,7 +21,12 @@ export function AppHero({
   className?: string;
 }) {
   return (
-    <section className={cn("relative overflow-hidden rounded-3xl bg-tint px-6 py-7 md:px-9 md:py-9", className)}>
+    <section
+      className={cn(
+        "relative overflow-hidden rounded-3xl border border-line/70 bg-gradient-to-r from-tint/90 via-base/80 to-tint/50 px-6 py-7 shadow-sm backdrop-blur-sm md:px-9 md:py-9",
+        className,
+      )}
+    >
       {variasi === "rumah" && (
         <GrafisRumah className="absolute -right-2 -bottom-1 hidden w-[230px] lg:block xl:right-6 xl:w-[260px]" />
       )}

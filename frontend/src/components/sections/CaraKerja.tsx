@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useReveal } from "@/components/motion/Reveal";
 import { WordRevealHeading } from "@/components/motion/WordRevealHeading";
 import { Cincin } from "@/components/ui/Grafis";
+import { TopoBackground } from "@/components/layout/TopoBackground";
 import { GambarBagikan, GambarKeluarga, GambarRute } from "@/components/ui/LangkahGambar";
 
 const STEPS = [
@@ -25,9 +26,10 @@ const STEPS = [
 export function CaraKerja() {
   const reveal = useReveal();
   return (
-    <section id="cara-kerja" className="relative scroll-mt-20 overflow-hidden bg-base py-20 md:py-28">
-      <Cincin className="absolute top-0 right-0 hidden w-[290px] lg:block" />
-      <div className="shell">
+    <section id="cara-kerja" className="relative scroll-mt-20 overflow-hidden bg-base/95 py-20 backdrop-blur-[2px] md:py-28">
+      <TopoBackground variant="warm" className="opacity-[0.12]" />
+      <Cincin className="absolute top-0 right-0 hidden w-[290px] opacity-70 lg:block" />
+      <div className="shell relative z-10">
         <WordRevealHeading className="max-w-[16ch] t-h2 text-ink" scrub={false} duration={0.6} stagger={0.13}>
           Tiga langkah, sekitar sepuluh menit.
         </WordRevealHeading>

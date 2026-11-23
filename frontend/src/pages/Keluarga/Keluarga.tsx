@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, LocateFixed, Pencil, Search, Trash2, X } from "lucide-react";
+import { Check, LocateFixed, Maximize2, Minimize2, Pencil, Search, Trash2, X } from "lucide-react";
 import {
   useAddMember,
   useDeleteMember,
@@ -136,6 +136,8 @@ export function Keluarga() {
   const lokasi = useLokasi();
   const cari = useCariLokasi();
   const [q, setQ] = useState("");
+  const [petaBesar, setPetaBesar] = useState(false);
+  const [modalPetaFull, setModalPetaFull] = useState(false);
   const menungguGps = useRef(false);
   const adaTitik = household?.lat != null && household?.lng != null;
   const { data: cuaca } = useCuaca(household?.lat ?? 0, household?.lng ?? 0, adaTitik);
@@ -332,13 +334,15 @@ export function Keluarga() {
       </section>
 
       {/* Lokasi rumah */}
-      <section aria-labelledby="judul-lokasi" className="rounded-2xl border border-line bg-base p-6">
-        <h2 id="judul-lokasi" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
-          Lokasi rumah
-        </h2>
-        <p className="mt-2 text-[16px] leading-[1.6] text-ink-3">
-          Ketuk peta untuk menandai rumahmu. Lokasi dipakai untuk titik kumpul terdekat dan prakiraan cuaca BMKG.
-        </p>
+      <section aria-labelledby="judul-lokasi" className="rounded-3xl border border-line/80 bg-base/95 p-6 shadow-sm backdrop-blur-sm">
+        <div>
+          <h2 id="judul-lokasi" className="text-[20px] font-semibold tracking-[-0.015em] text-ink">
+            Lokasi rumah
+          </h2>
+          <p className="mt-1 text-[15px] leading-[1.6] text-ink-3">
+            Ketuk peta untuk menandai rumahmu. Lokasi dipakai untuk titik kumpul terdekat dan prakiraan cuaca BMKG.
+          </p>
+        </div>
 
         <div className="mt-4" role="status" aria-live="polite">
           {adaTitik ? (
@@ -370,7 +374,36 @@ export function Keluarga() {
           )}
         </div>
 
-        <PetaLeaflet titik={titikPeta} onPilih={simpanLokasi} tinggi={320} className="mt-4" />
+        <div className="relative mt-4">
+          <PetaLeaflet
+            titik={titikPeta}
+            onPilih={simpanLokasi}
+            tinggi={petaBesar ? 580 : 380}
+            className="transition-all duration-300"
+          />
+
+          {/* Tombol ukuran di sudut kanan atas peta */}
+          <div className="absolute top-3 right-3 z-[1000] flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPetaBesar((v) => !v)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line/80 bg-base/90 px-3 text-[12px] font-semibold text-ink shadow-sm backdrop-blur-md transition-colors hover:bg-base hover:shadow cursor-pointer"
+              title={petaBesar ? "Kecilkan tinggi peta" : "Perbesar tinggi peta"}
+            >
+              {petaBesar ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              <span>{petaBesar ? "Kecilkan" : "Perbesar"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalPetaFull(true)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-ink/90 px-3 text-[12px] font-semibold text-white shadow-sm backdrop-blur-md transition-colors hover:bg-ink hover:shadow cursor-pointer"
+              title="Buka peta layar penuh"
+            >
+              <Maximize2 className="size-3.5" />
+              <span>Layar penuh</span>
+            </button>
+          </div>
+        </div>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
@@ -647,6 +680,64 @@ export function Keluarga() {
             </div>
           </form>
         </Dialog>
+      )}
+      {/* Modal Peta Layar Penuh */}
+      {modalPetaFull && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-night/80 p-3 backdrop-blur-sm animate-in fade-in md:p-6">
+          <div className="relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-line bg-base shadow-2xl">
+            <div className="flex items-center justify-between border-b border-line bg-base px-6 py-4">
+              <div>
+                <h3 className="text-[18px] font-semibold text-ink">Peta Lokasi Rumah (Layar Penuh)</h3>
+                <p className="text-[13px] text-ink-3">
+                  Ketuk langsung pada peta untuk menandai atau memindahkan titik lokasi rumahmu.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalPetaFull(false)}
+                className="flex size-10 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-tint hover:text-ink cursor-pointer"
+                aria-label="Tutup peta layar penuh"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <div className="relative min-h-0 flex-1">
+              <PetaLeaflet
+                titik={titikPeta}
+                onPilih={simpanLokasi}
+                tinggi="100%"
+                className="size-full rounded-none border-none"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-line bg-base/95 p-4 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={pakaiLokasiku}
+                disabled={lokasi.status === "meminta"}
+                className={cn(TOMBOL_SEKUNDER, "h-11 gap-2 px-5 text-[15px]")}
+              >
+                <LocateFixed className="size-4" aria-hidden="true" />
+                {lokasi.status === "meminta" ? "Menunggu izin lokasi…" : "Pakai lokasiku"}
+              </button>
+
+              {namaLokasi && (
+                <p className="truncate text-[14px] font-medium text-ink sm:max-w-md">
+                  📍 {namaLokasi}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setModalPetaFull(false)}
+                className={cn(TOMBOL_UTAMA, "h-11 px-6 text-[15px] sm:ml-auto cursor-pointer")}
+              >
+                Selesai & Tutup
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

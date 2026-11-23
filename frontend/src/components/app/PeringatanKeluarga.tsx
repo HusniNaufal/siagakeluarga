@@ -9,8 +9,16 @@ import { useKodeTelegram, usePeringatan, usePutuskanTelegram } from "@/hooks/use
  * pesan siap kirim ke grup WhatsApp. Pengiriman otomatis lewat Telegram bersifat opsional.
  * Ini pengingat dari aplikasi, BUKAN peringatan dini resmi.
  */
-export function PeringatanKeluarga({ shareToken }: { shareToken: string }) {
-  const { data, isLoading, isError } = usePeringatan();
+export function PeringatanKeluarga({
+  shareToken,
+  lat,
+  lng,
+}: {
+  shareToken: string;
+  lat?: number | null;
+  lng?: number | null;
+}) {
+  const { data, isLoading, isError } = usePeringatan(lat, lng);
   const kode = useKodeTelegram();
   const putuskan = usePutuskanTelegram();
   const [tersalin, setTersalin] = useState(false);

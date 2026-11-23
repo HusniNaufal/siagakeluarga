@@ -37,32 +37,32 @@ export function Sidebar() {
     : "Lokasi belum diisi";
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[240px] shrink-0 flex-col border-r border-line bg-base px-4 py-8 md:flex">
-      <Link to="/beranda-saya" aria-label="SiagaKeluarga, beranda saya" className="px-2">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden h-screen w-[250px] shrink-0 flex-col border-r border-line/80 bg-base/95 px-4 py-8 shadow-sm backdrop-blur-md md:flex">
+      <Link to="/beranda-saya" aria-label="SiagaKeluarga, beranda saya" className="px-2 transition-transform hover:opacity-90">
         <Logo />
       </Link>
 
-      <nav aria-label="Navigasi utama aplikasi" className="mt-8 flex flex-1 flex-col gap-1">
+      <nav aria-label="Navigasi utama aplikasi" className="mt-8 flex flex-1 flex-col gap-1.5">
         {APP_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex min-h-11 items-center gap-3 rounded-xl px-3 text-[15px] transition-colors",
+                "flex min-h-11 items-center gap-3 rounded-xl px-3.5 text-[15px] transition-all",
                 isActive
-                  ? "bg-tint font-semibold text-ink"
+                  ? "bg-tint font-semibold text-ink shadow-xs"
                   : "font-normal text-ink-3 hover:bg-surface hover:text-ink",
               )
             }
           >
-            <Icon className="size-[18px] shrink-0" strokeWidth={1.6} />
+            <Icon className="size-[18px] shrink-0" strokeWidth={1.7} />
             <span className="truncate">{label}</span>
           </NavLink>
         ))}
       </nav>
 
-      <div className="mt-auto flex items-center gap-3 rounded-2xl border border-line bg-surface p-3">
+      <div className="mt-auto flex items-center gap-3 rounded-2xl border border-line/80 bg-surface/80 p-3 shadow-xs">
         <span
           aria-hidden="true"
           className="flex size-10 shrink-0 items-center justify-center rounded-full bg-base text-[14px] font-semibold text-ink"

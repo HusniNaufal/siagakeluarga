@@ -5,7 +5,14 @@ import { validate } from '../middlewares/validate.js';
 import * as ai from '../controllers/ai.controller.js';
 import * as admin from '../controllers/admin.controller.js';
 
-const askSchema = z.object({ pertanyaan: z.string().trim().min(5, 'Pertanyaan minimal 5 karakter').max(1000) });
+const askSchema = z.object({
+  pertanyaan: z.string().trim().min(2, 'Pertanyaan terlalu pendek').max(1000, 'Pertanyaan maksimal 1000 karakter'),
+  // Riwayat percakapan singkat supaya asisten paham pertanyaan lanjutan
+  riwayat: z
+    .array(z.object({ role: z.enum(['user', 'ai']), text: z.string().trim().min(1).max(4000) }))
+    .max(20)
+    .optional(),
+});
 const quizSchema = z.object({
   jenis_bencana: z.enum(['GEMPA', 'TSUNAMI', 'BANJIR', 'LONGSOR', 'CUACA_EKSTREM']).optional(),
 });

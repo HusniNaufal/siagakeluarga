@@ -16,7 +16,12 @@ export function useUpdateHousehold() {
   return useMutation({
     mutationFn: (body: { region_id?: number | null; lat?: number | null; lng?: number | null; regenerate_share_token?: boolean }) =>
       api.put<Household>("/household", body),
-    onSuccess: (data) => qc.setQueryData(HOUSEHOLD_KEY, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: HOUSEHOLD_KEY });
+      qc.invalidateQueries({ queryKey: ["peringatan"] });
+      qc.invalidateQueries({ queryKey: ["risk"] });
+      qc.invalidateQueries({ queryKey: ["cuaca"] });
+    },
   });
 }
 

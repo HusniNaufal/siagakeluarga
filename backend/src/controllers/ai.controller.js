@@ -22,7 +22,7 @@ export const plan = async (req, res, next) => {
 
 export const ask = async (req, res, next) => {
   try {
-    const { jawaban, referensi, fallback } = await ai.askRag(req.body.pertanyaan, req.user?.id);
+    const { jawaban, referensi, fallback } = await ai.askRag(req.body.pertanyaan, req.user?.id, req.body.riwayat);
     res.json({
       success: true,
       message: fallback ? 'AI sedang dibatasi kuota; menampilkan potongan panduan relevan' : 'Jawaban berhasil dibuat',

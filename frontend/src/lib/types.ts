@@ -192,6 +192,17 @@ export interface AskResponse {
   referensi: AskReferensi[];
 }
 
+export interface AskRiwayat {
+  role: "user" | "ai";
+  text: string;
+}
+
+export interface PesanTanya extends AskRiwayat {
+  id: string;
+  referensi?: AskReferensi[];
+  galat?: boolean;
+}
+
 export interface ShareCard {
   keluarga: string;
   lokasi: { kecamatan: string; kab_kota: string } | null;

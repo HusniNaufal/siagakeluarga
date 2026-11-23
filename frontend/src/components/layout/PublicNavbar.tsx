@@ -53,9 +53,9 @@ export function PublicNavbar({ placement = "flow" }: PublicNavbarProps) {
       >
         <div
           className={cn(
-            "mx-auto flex h-14 max-w-[1240px] items-center justify-between gap-4",
+            "mx-auto flex h-14 max-w-[1240px] items-center justify-between gap-4 transition-all",
             floating &&
-              "rounded-[18px] border border-line bg-white pr-2 pl-4 shadow-[0_10px_30px_-12px_rgba(6,11,20,0.45)]",
+              "rounded-[22px] border border-line/80 bg-white/95 pr-2 pl-4 shadow-[0_12px_36px_-10px_rgba(6,11,20,0.35)] backdrop-blur-md",
           )}
         >
           <Link to="/" aria-label="SiagaKeluarga, beranda" className="shrink-0">

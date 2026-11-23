@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Maximize2, Minimize2 } from "lucide-react";
 import { useHousehold } from "@/hooks/useHousehold";
 import { useRisk } from "@/hooks/useRisk";
 import { jamDari, namaHari, useCuaca } from "@/hooks/useCuaca";
@@ -44,6 +45,7 @@ function jarakLabel(km: number | null | undefined) {
 }
 
 export function Risiko() {
+  const [petaBesar, setPetaBesar] = useState(false);
   const { data: household, isLoading } = useHousehold();
   const punyaLokasi = household?.lat != null && household?.lng != null;
   const { data: risk } = useRisk(
@@ -186,7 +188,19 @@ export function Risiko() {
 
       {/* Titik kumpul */}
       <section>
-        <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Titik kumpul terdekat</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[20px] font-semibold tracking-[-0.015em] text-ink">Titik kumpul terdekat</h2>
+          {titik.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setPetaBesar((v) => !v)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-tint/60 px-3.5 text-[13px] font-medium text-ink transition-colors hover:bg-tint cursor-pointer"
+            >
+              {petaBesar ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+              <span>{petaBesar ? "Kecilkan peta" : "Perbesar peta"}</span>
+            </button>
+          )}
+        </div>
         {titik.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-line bg-base p-6 text-[16px] leading-[1.6] text-ink-3">
             Belum ada titik kumpul tercatat untuk wilayahmu. Tanyakan ke RT/RW atau BPBD setempat.
@@ -194,8 +208,8 @@ export function Risiko() {
         ) : (
           <>
           <PetaLeaflet
-            className="mt-4"
-            tinggi={300}
+            className="mt-4 transition-all duration-300"
+            tinggi={petaBesar ? 540 : 360}
             titik={[
               ...(household.lat != null && household.lng != null
                 ? [{ lat: household.lat, lng: household.lng, label: "Rumahmu", jenis: "rumah" } as TitikPeta]

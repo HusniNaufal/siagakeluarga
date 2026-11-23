@@ -4,15 +4,21 @@ import { Award, LogOut, Users } from "lucide-react";
 import { Sidebar, MobileBottomNav } from "@/components/layout/Sidebar";
 import { Logo } from "@/components/brand/Logo";
 import { useAuth } from "@/context/AuthContext";
+import { TanyaWidget } from "@/components/ai/TanyaWidget";
+import { TopoBackground } from "@/components/layout/TopoBackground";
 
 export function AppShell() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex min-h-screen bg-paper">
+    <div className="relative min-h-screen bg-paper text-ink">
+      {/* Topographic Relief Background khas SiagaKeluarga */}
+      <TopoBackground variant="light" className="fixed inset-0 opacity-[0.35] pointer-events-none" />
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_75%_50%_at_50%_-10%,rgba(194,65,12,0.04),transparent_70%)]" />
+
       <Sidebar />
 
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col md:pl-[250px]">
         {/* Header ringkas khusus ponsel. Keluarga dan Latihan ada di sini karena bottom bar hanya muat lima tujuan. */}
         <header className="relative z-10 flex h-16 items-center justify-between border-b border-line bg-base px-4 md:hidden">
           <Link to="/beranda-saya" aria-label="SiagaKeluarga, beranda saya">
@@ -55,6 +61,7 @@ export function AppShell() {
         </main>
 
         <MobileBottomNav />
+        <TanyaWidget />
       </div>
     </div>
   );

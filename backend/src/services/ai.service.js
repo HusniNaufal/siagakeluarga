@@ -3,13 +3,14 @@ import { z } from 'zod';
 import prisma from '../lib/prisma.js';
 
 // gemini-2.5-flash sudah tidak tersedia untuk akun baru; bisa diganti lewat env GEMINI_MODEL
-export const CHAT_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+export const CHAT_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 export const EMBED_MODEL = 'gemini-embedding-001';
 export const EMBED_DIM = 768;
 
 let client;
 const getClient = () => {
-  if (!process.env.GEMINI_API_KEY) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key || /your_gemini_api_key/i.test(key)) {
     throw aiError(503, 'Layanan AI belum dikonfigurasi (GEMINI_API_KEY kosong).');
   }
   client ||= new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -156,7 +157,7 @@ export const describeHousehold = (h, { detailed = true } = {}) => {
 
 // ---------- Generasi ----------
 // Model utama lalu cadangan jika model sedang overload (503) / kena limit (429)
-const MODEL_CHAIN = [...new Set([CHAT_MODEL, 'gemini-3.5-flash', 'gemini-2.5-flash-lite'])];
+const MODEL_CHAIN = [...new Set([CHAT_MODEL, 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'])];
 
 const generateWithFallback = async (contents, config) => {
   let last;
@@ -264,28 +265,80 @@ export const generateEmergencyPlan = async (userId, householdId) => {
   return { id: saved.id, created_at: saved.created_at, model_ai: saved.model_ai, konten: plan };
 };
 
-// ---------- Fitur 2: RAG ----------
-export const askRag = async (pertanyaan, userId) => {
-  const chunks = await searchGuides(pertanyaan, 3);
-  if (!chunks.length) {
-    throw aiError(409, 'Basis pengetahuan panduan belum di-index. Hubungi admin untuk menjalankan reindex-guides.');
+// ---------- Fitur 2: Tanya Siaga (chat AI + RAG) ----------
+const SYSTEM_TANYA =
+  SYSTEM_BASE +
+  ' Namamu "Tanya Siaga", asisten AI di aplikasi SiagaKeluarga.' +
+  ' Fokus HANYA pada topik bencana dan kesiapsiagaan: gempa, tsunami, banjir, longsor, cuaca ekstrem, kebakaran, erupsi gunung api,' +
+  ' P3K dasar saat bencana, tas siaga, evakuasi, titik kumpul, rencana keluarga, pemulihan pascabencana, dan cara memakai aplikasi ini.' +
+  ' Jika pertanyaan di luar topik tersebut, tolak dengan sopan dalam satu kalimat lalu tawarkan bantuan seputar kesiapsiagaan.' +
+  ' Jika pengguna tampak sedang dalam bahaya SAAT INI, awali jawaban dengan tindakan keselamatan terpenting dan sebutkan nomor darurat 112.' +
+  ' Jawab ringkas (umumnya di bawah 200 kata). Gunakan daftar bernomor untuk langkah berurutan dan "-" untuk poin, boleh **tebal** untuk hal penting.' +
+  ' Jangan memberi diagnosis medis. Jangan mengarang nomor telepon, alamat, atau status peringatan terkini;' +
+  ' arahkan ke aplikasi/situs resmi BMKG (bmkg.go.id), InaRISK, atau BPBD setempat untuk informasi terbaru.';
+
+const tokenKata = (s) =>
+  String(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 3);
+
+// Cari potongan panduan relevan. Tidak pernah melempar galat: bila index/embedding tidak tersedia,
+// asisten tetap menjawab dari pengetahuan umum Gemini.
+const cariPanduan = async (pertanyaan) => {
+  try {
+    const rows = await searchGuides(pertanyaan, 3);
+    const berskor = rows.filter((r) => Number.isFinite(r.similarity));
+    if (berskor.length) return berskor.filter((r) => r.similarity >= 0.5);
+    // Database tiruan (tanpa pgvector): pakai pencocokan kata kunci sederhana
+    const kata = new Set(tokenKata(pertanyaan));
+    if (!kata.size) return [];
+    return rows
+      .map((r) => ({
+        ...r,
+        similarity: tokenKata(`${r.sumber} ${r.isi}`).filter((w) => kata.has(w)).length / kata.size,
+      }))
+      .filter((r) => r.similarity >= 0.2)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 3);
+  } catch (err) {
+    console.warn('[Tanya] Pencarian panduan dilewati:', String(err?.message || err).slice(0, 200));
+    return [];
   }
-  const h = userId ? await loadHouseholdContext(userId) : null;
+};
+
+// Riwayat percakapan dari klien -> format multi-turn Gemini (selalu diawali giliran user)
+const susunRiwayat = (riwayat = []) => {
+  const turns = riwayat
+    .slice(-10)
+    .map((m) => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: String(m.text).slice(0, 2000) }] }));
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  return turns;
+};
+
+export const askRag = async (pertanyaan, userId, riwayat = []) => {
+  const chunks = await cariPanduan(pertanyaan);
+  const h = userId ? await loadHouseholdContext(userId).catch(() => null) : null;
   const referensi = chunks.map((c) => ({ id: c.id, sumber: c.sumber, similarity: Number(c.similarity.toFixed(4)) }));
 
   const context = chunks.map((c, i) => `[${i + 1}] Sumber: ${c.sumber}\n${c.isi}`).join('\n\n');
   const prompt =
-    `KONTEKS PANDUAN BNPB:\n${context}\n\n` +
+    (chunks.length ? `KONTEKS PANDUAN RESMI (utamakan ini):\n${context}\n\n` : '') +
     (h ? `PROFIL KELUARGA PENANYA:\n${describeHousehold(h, { detailed: false })}\n\n` : '') +
     `PERTANYAAN: ${pertanyaan}\n\n` +
-    'Jawab secara praktis dan akurat berdasarkan konteks panduan di atas. Jika konteks tidak cukup, katakan terus terang. ' +
-    'Akhiri dengan baris "Sumber:" yang menyebut nama dokumen yang dirujuk.';
+    (chunks.length
+      ? 'Jawab praktis dan akurat, utamakan konteks panduan di atas; boleh dilengkapi pengetahuan umum kebencanaan yang sesuai pedoman BNPB/BMKG.'
+      : 'Jawab praktis dan akurat berdasarkan pedoman umum BNPB/BMKG.') +
+    (h ? ' Sesuaikan saran dengan profil keluarga bila relevan.' : '');
+
+  const contents = [...susunRiwayat(riwayat), { role: 'user', parts: [{ text: prompt }] }];
 
   try {
-    const jawaban = await generateText(prompt, SYSTEM_BASE);
+    const { text: jawaban } = await generateWithFallback(contents, { systemInstruction: SYSTEM_TANYA, temperature: 0.4 });
     return { jawaban, referensi, fallback: false };
   } catch (err) {
-    if (err.rateLimited || err.statusCode === 503) {
+    if (chunks.length && (err.rateLimited || err.statusCode === 503)) {
       // Fallback: tampilkan potongan panduan terdekat tanpa generasi AI
       const jawaban =
         `${err.message}\n\nSementara itu, berikut potongan panduan BNPB yang paling relevan:\n\n` +

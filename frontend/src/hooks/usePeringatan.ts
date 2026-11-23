@@ -20,11 +20,11 @@ export type PeringatanData =
   | { tersedia: false; alasan: string; telegram: TelegramStatus };
 
 /** Pengingat bersiap untuk rumah pengguna, dari prakiraan BMKG di lokasinya. */
-export function usePeringatan() {
+export function usePeringatan(lat?: number | null, lng?: number | null) {
   return useQuery({
-    queryKey: ["peringatan"],
+    queryKey: ["peringatan", lat, lng],
     queryFn: () => api.get<PeringatanData>("/peringatan"),
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
   });
 }
 
