@@ -72,8 +72,8 @@ npm run dev
 ## Tim
 | Nama | Peran |
 |---|---|
-| _(Ketua / PM)_ | Project Manager |
-| _(isi)_ | Frontend Developer |
+| Ihsan garutz | Project Manager |
+| Azh Zhahir Ramadhan Putra | Frontend Developer |
 | Muhammad Husni Naufal Kurniawan | Backend & AI Engineer |
 | _(isi)_ | AI Engineer |
 | _(isi)_ | UI/UX dan Dokumentasi |
