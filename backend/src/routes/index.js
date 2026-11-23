@@ -29,6 +29,9 @@ const loginSchema = z.object({
   email: z.string().trim().email('Email tidak valid'),
   password: z.string().min(1, 'Password wajib diisi'),
 });
+const profileUpdateSchema = z.object({
+  nama: z.string().trim().min(1, 'Nama wajib diisi'),
+});
 const householdUpdateSchema = z.object({
   region_id: z.number().int().nullable().optional(),
   lat: z.number().min(-90).max(90).nullable().optional(),
@@ -67,6 +70,7 @@ router.get('/health', (req, res) => {
 router.post('/auth/register', validate({ body: registerSchema }), auth.register);
 router.post('/auth/login', validate({ body: loginSchema }), auth.login);
 router.get('/auth/me', authenticate, auth.me);
+router.put('/auth/profile', authenticate, validate({ body: profileUpdateSchema }), auth.updateProfile);
 
 // Household & members
 router.get('/household', authenticate, household.getHousehold);

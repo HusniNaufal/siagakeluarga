@@ -10,6 +10,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<MeResponse>;
   register: (nama: string, email: string, password: string) => Promise<MeResponse>;
+  updateProfile: (nama: string) => Promise<User>;
   logout: () => void;
   refreshMe: () => Promise<MeResponse | null>;
 }
@@ -69,6 +70,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setHousehold(null);
   }, []);
 
+  const updateProfile = useCallback(
+    async (nama: string) => {
+      const res = await api.put<User>("/auth/profile", { nama });
+      setUser(res);
+      await refreshMe();
+      return res;
+    },
+    [refreshMe],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -77,10 +88,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!user,
       login,
       register,
+      updateProfile,
       logout,
       refreshMe,
     }),
-    [user, household, isLoading, login, register, logout, refreshMe],
+    [user, household, isLoading, login, register, updateProfile, logout, refreshMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

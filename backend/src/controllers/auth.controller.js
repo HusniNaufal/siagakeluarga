@@ -93,3 +93,23 @@ export const me = async (req, res, next) => {
     next(err);
   }
 };
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { nama } = req.body;
+    if (!nama || !nama.trim()) {
+      return res.status(400).json({ success: false, message: 'Nama tidak boleh kosong' });
+    }
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { nama: nama.trim() },
+    });
+    res.json({
+      success: true,
+      message: 'Profil berhasil diperbarui',
+      data: { user: publicUser(user) },
+    });
+  } catch (err) {
+    next(err);
+  }
+};

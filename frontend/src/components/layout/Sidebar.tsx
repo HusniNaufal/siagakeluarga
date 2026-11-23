@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import {
   Home,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/hooks/useHousehold";
 import { Logo } from "@/components/brand/Logo";
+import { ProfileModal } from "@/components/profile/ProfileModal";
 import { cn } from "@/lib/utils";
 
 const APP_NAV_ITEMS = [
@@ -32,6 +34,7 @@ const MOBILE_NAV = APP_NAV_ITEMS.filter((i) =>
 export function Sidebar() {
   const { user, logout } = useAuth();
   const { data: household } = useHousehold();
+  const [showProfile, setShowProfile] = useState(false);
   const kelurahanLabel = household?.region?.kecamatan
     ? `Kec. ${household.region.kecamatan}`
     : "Lokasi belum diisi";
@@ -62,34 +65,43 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto flex items-center gap-3 rounded-2xl border border-line/80 bg-surface/80 p-3 shadow-xs">
-        <span
-          aria-hidden="true"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-base text-[14px] font-semibold text-ink"
+      <div className="mt-auto flex items-center gap-1.5 rounded-2xl border border-line/80 bg-surface/80 p-2 shadow-xs">
+        <button
+          type="button"
+          onClick={() => setShowProfile(true)}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1.5 text-left transition-colors hover:bg-base/80 cursor-pointer"
+          title="Buka profil akun"
         >
-          {(user?.nama ?? "?")
-            .split(" ")
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((s) => s[0]?.toUpperCase())
-            .join("")}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold text-ink">{user?.nama ?? "Tamu"}</p>
-          <p className="truncate text-[13px] text-ink-3">{kelurahanLabel}</p>
-        </div>
+          <span
+            aria-hidden="true"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-base text-[14px] font-semibold text-ink shadow-xs"
+          >
+            {(user?.nama ?? "?")
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((s) => s[0]?.toUpperCase())
+              .join("")}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-semibold text-ink hover:underline">{user?.nama ?? "Tamu"}</p>
+            <p className="truncate text-[13px] text-ink-3">{kelurahanLabel}</p>
+          </div>
+        </button>
         {user && (
           <button
             type="button"
             onClick={logout}
             aria-label="Keluar dari akun"
             title="Keluar"
-            className="flex size-11 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-base hover:text-ink"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-base hover:text-ink cursor-pointer"
           >
             <LogOut className="size-[18px]" strokeWidth={1.6} />
           </button>
         )}
       </div>
+
+      <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
     </aside>
   );
 }
