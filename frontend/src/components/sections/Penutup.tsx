@@ -18,7 +18,7 @@ export function Penutup() {
             imgClassName="object-[50%_60%]"
           />
           <div className="px-6 py-10 md:px-12 md:py-14">
-            <WordRevealHeading className="t-h2 text-white">
+            <WordRevealHeading className="t-h2 text-white" scrub={false} duration={0.6} stagger={0.13}>
               Susun rencanamu selagi rumah masih kering.
             </WordRevealHeading>
             <p className="mt-4 max-w-[46ch] t-lead text-white/75">

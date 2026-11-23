@@ -28,7 +28,7 @@ export function CaraKerja() {
     <section id="cara-kerja" className="relative scroll-mt-20 overflow-hidden bg-base py-20 md:py-28">
       <Cincin className="absolute top-0 right-0 hidden w-[290px] lg:block" />
       <div className="shell">
-        <WordRevealHeading className="max-w-[16ch] t-h2 text-ink">
+        <WordRevealHeading className="max-w-[16ch] t-h2 text-ink" scrub={false} duration={0.6} stagger={0.13}>
           Tiga langkah, sekitar sepuluh menit.
         </WordRevealHeading>
 

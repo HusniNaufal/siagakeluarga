@@ -10,7 +10,7 @@ export function Stats() {
     <section className="bg-paper py-20 md:py-28">
       <div className="shell">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16">
-          <WordRevealHeading className="t-h2 text-ink">
+          <WordRevealHeading className="t-h2 text-ink" scrub={false} duration={0.6} stagger={0.13}>
             Banyak keluarga baru berunding saat air sudah masuk rumah.
           </WordRevealHeading>
           <p className="max-w-[48ch] t-lead text-ink-3">

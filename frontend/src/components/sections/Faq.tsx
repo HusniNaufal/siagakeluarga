@@ -40,7 +40,7 @@ export function Faq() {
       </div>
       <div className="shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div>
-          <WordRevealHeading className="t-h2 text-ink">
+          <WordRevealHeading className="t-h2 text-ink" scrub={false} duration={0.6} stagger={0.13}>
             Pertanyaan yang biasanya ditanyakan dulu.
           </WordRevealHeading>
           <GrafisRumah className="mt-12 hidden w-[320px] lg:block" />

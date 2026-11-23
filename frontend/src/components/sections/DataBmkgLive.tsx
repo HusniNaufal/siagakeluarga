@@ -281,7 +281,7 @@ export function DataBmkgLive() {
       <Gelombang className="absolute inset-x-0 top-0 -translate-y-[calc(100%-1px)] text-night" />
       <div className="shell">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16">
-          <WordRevealHeading className="t-h2 text-white">
+          <WordRevealHeading className="t-h2 text-white" scrub={false} duration={0.6} stagger={0.13}>
             Cuaca dibaca di kelurahan rumahmu, bukan di kota secara umum.
           </WordRevealHeading>
           <div>

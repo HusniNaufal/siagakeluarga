@@ -61,7 +61,7 @@ export function Fitur() {
       <div className="shell">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-[680px]">
-            <WordRevealHeading className="t-h2 text-ink">
+            <WordRevealHeading className="t-h2 text-ink" scrub={false} duration={0.6} stagger={0.13}>
               Lima bencana, langkahnya tidak sama.
             </WordRevealHeading>
             <p className="mt-4 t-lead text-ink-3">

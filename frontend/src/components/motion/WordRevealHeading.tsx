@@ -13,6 +13,10 @@ interface WordRevealHeadingProps {
   scrub?: boolean | number;
   start?: string;
   end?: string;
+  /** Durasi tiap kata saat animasi (detik). Default 0.5. Hanya berlaku bila scrub = false. */
+  duration?: number;
+  /** Jeda antar kata (detik). Default 0.12. */
+  stagger?: number;
 }
 
 export function WordRevealHeading({
@@ -23,6 +27,8 @@ export function WordRevealHeading({
   scrub = 0.6,
   start = "top 88%",
   end = "top 52%",
+  duration = 0.5,
+  stagger = 0.12,
 }: WordRevealHeadingProps) {
   const content = text || children || "";
   const containerRef = useRef<HTMLElement>(null);
@@ -53,13 +59,14 @@ export function WordRevealHeading({
         opacity: 1,
         y: 0,
         filter: "blur(0px)",
-        stagger: 0.08,
+        stagger,
+        duration: scrub ? undefined : duration,
         ease: "power2.out",
         scrollTrigger: {
           trigger: el,
           start,
-          end,
-          scrub,
+          end: scrub ? end : undefined,
+          scrub: scrub || false,
           toggleActions: scrub ? undefined : "play none none reverse",
         },
       },
@@ -69,7 +76,7 @@ export function WordRevealHeading({
       tween.scrollTrigger?.kill();
       tween.kill();
     };
-  }, [content, scrub, start, end]);
+  }, [content, scrub, start, end, duration, stagger]);
 
   return (
     <Component ref={containerRef as any} className={cn("inline-block", className)}>
