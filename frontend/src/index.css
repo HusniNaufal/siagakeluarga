@@ -158,6 +158,16 @@
   body {
     @apply bg-background text-foreground selection:bg-accent-soft selection:text-accent-hover;
   }
+  input, textarea, select {
+    color: var(--color-ink, #0b2545);
+  }
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--color-mist, #9aabc0);
+  }
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-accent-dark;
   }

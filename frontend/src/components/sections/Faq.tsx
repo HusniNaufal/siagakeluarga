@@ -1,8 +1,10 @@
 import { useId, useState } from "react";
 import { Plus } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Pembatas } from "@/components/ui/LangkahGambar";
 import { GrafisRumah } from "@/components/ui/Grafis";
+import { WordRevealHeading } from "@/components/motion/WordRevealHeading";
 
 const FAQS = [
   {
@@ -38,7 +40,9 @@ export function Faq() {
       </div>
       <div className="shell grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div>
-          <h2 className="t-h2 text-ink">Pertanyaan yang biasanya ditanyakan dulu.</h2>
+          <WordRevealHeading className="t-h2 text-ink">
+            Pertanyaan yang biasanya ditanyakan dulu.
+          </WordRevealHeading>
           <GrafisRumah className="mt-12 hidden w-[320px] lg:block" />
         </div>
         <div className="divide-y divide-line border-y border-line">
@@ -46,33 +50,42 @@ export function Faq() {
             const isOpen = open === i;
             const panelId = `${baseId}-${i}`;
             return (
-              <div key={item.q}>
+              <div key={item.q} className="group">
                 <h3>
                   <button
                     type="button"
                     onClick={() => setOpen(isOpen ? -1 : i)}
                     aria-expanded={isOpen}
                     aria-controls={panelId}
-                    className="flex min-h-14 w-full items-center justify-between gap-4 py-5 text-left"
+                    className="flex min-h-14 w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-accent-dark cursor-pointer"
                   >
-                    <span className="text-[17px] font-medium text-ink">{item.q}</span>
+                    <span className="text-[17px] font-medium text-ink group-hover:text-accent-dark transition-colors">{item.q}</span>
                     <Plus
                       className={cn(
-                        "size-5 shrink-0 text-muted transition-transform duration-200",
-                        isOpen && "rotate-45",
+                        "size-5 shrink-0 text-muted transition-transform duration-300",
+                        isOpen && "rotate-45 text-accent-dark",
                       )}
                       aria-hidden="true"
                     />
                   </button>
                 </h3>
-                <div
-                  id={panelId}
-                  role="region"
-                  hidden={!isOpen}
-                  className="pb-6 text-[16px] leading-[1.65] text-ink-3"
-                >
-                  {item.a}
-                </div>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      id={panelId}
+                      role="region"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.28, ease: [0.04, 0.62, 0.23, 0.98] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="pb-6 text-[16px] leading-[1.65] text-ink-3">
+                        {item.a}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}

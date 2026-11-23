@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { ParallaxImage } from "@/components/motion/ParallaxImage";
+import { WordRevealHeading } from "@/components/motion/WordRevealHeading";
 
 const LANGKAH = ["Daftarkan anggota rumah", "Cek titik kumpul dan tugasnya", "Kirim tautan ke grup keluarga"];
 
@@ -16,9 +18,9 @@ export function Penutup() {
             imgClassName="object-[50%_60%]"
           />
           <div className="px-6 py-10 md:px-12 md:py-14">
-            <h2 className="t-h2">
+            <WordRevealHeading className="t-h2 text-white">
               Susun rencanamu selagi rumah masih kering.
-            </h2>
+            </WordRevealHeading>
             <p className="mt-4 max-w-[46ch] t-lead text-white/75">
               Gratis untuk rencana dasar. Titik kumpul usulan bisa kamu ubah kalau tidak cocok dengan keadaan gang di
               rumah.
@@ -33,13 +35,15 @@ export function Penutup() {
               ))}
             </ol>
 
-            <Link
-              to="/daftar"
-              className="group mt-9 inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-8 text-[17px] font-semibold text-ink"
-            >
-              Buat rencana keluarga
-              <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
+            <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }} className="inline-block">
+              <Link
+                to="/daftar"
+                className="group mt-9 inline-flex h-14 items-center gap-2.5 rounded-full bg-white px-8 text-[17px] font-semibold text-ink shadow-md hover:shadow-xl transition-shadow"
+              >
+                Buat rencana keluarga
+                <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              </Link>
+            </motion.div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { useReveal } from "@/components/motion/Reveal";
+import { WordRevealHeading } from "@/components/motion/WordRevealHeading";
 import { ArrowUpRight, Mountain, Siren, Waves, Wind, Activity } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -60,28 +61,31 @@ export function Fitur() {
       <div className="shell">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="max-w-[680px]">
-            <h2 className="t-h2 text-ink">
+            <WordRevealHeading className="t-h2 text-ink">
               Lima bencana, langkahnya tidak sama.
-            </h2>
+            </WordRevealHeading>
             <p className="mt-4 t-lead text-ink-3">
               Tiap panduan dibagi tiga: sebelum, saat, dan sesudah. Langkah yang
               cocok bisa langsung dimasukkan ke rencana keluarga.
             </p>
           </div>
-          <Link
-            to="/panduan"
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white transition-transform hover:scale-[1.02] active:scale-[0.99]"
-          >
-            Buka semua panduan
-            <ArrowUpRight className="size-4" aria-hidden="true" />
-          </Link>
+          <motion.div whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.97 }}>
+            <Link
+              to="/panduan"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white shadow-sm hover:shadow-md transition-shadow"
+            >
+              Buka semua panduan
+              <ArrowUpRight className="size-4" aria-hidden="true" />
+            </Link>
+          </motion.div>
         </div>
 
         <div className="mt-12 grid gap-4 lg:grid-cols-[1.15fr_1fr_1fr]">
           <MotionLink
             {...reveal(0)}
+            whileHover={{ y: -6, scale: 1.01, transition: { type: "spring", stiffness: 300, damping: 22 } }}
             to={`/panduan/${BANJIR.jenis}`}
-            className="group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[28px] bg-night p-7 text-white lg:row-span-2"
+            className="group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-[28px] bg-night p-7 text-white lg:row-span-2 shadow-sm hover:shadow-xl transition-shadow"
           >
             <img
               src="/images/evakuasi-perahu.webp"
@@ -113,9 +117,15 @@ export function Fitur() {
           {OTHERS.map((item, i) => (
             <MotionLink
               {...reveal(i + 1)}
+              whileHover={{
+                y: -6,
+                scale: 1.015,
+                boxShadow: "0 16px 30px -8px rgba(11, 37, 69, 0.08)",
+                transition: { type: "spring", stiffness: 320, damping: 22 },
+              }}
               key={item.jenis}
               to={`/panduan/${item.jenis}`}
-              className="group flex flex-col rounded-[24px] border border-line bg-base p-6 transition-colors hover:border-ink/25"
+              className="group flex flex-col rounded-[24px] border border-line bg-base p-6 transition-all hover:border-ink/30 cursor-pointer"
             >
               <span
                 className="inline-flex size-11 items-center justify-center rounded-full text-white"

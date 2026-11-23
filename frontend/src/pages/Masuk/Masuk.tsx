@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/api";
 import { Logo } from "@/components/brand/Logo";
@@ -12,6 +13,7 @@ export function Masuk() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -64,7 +66,7 @@ export function Masuk() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-[52px] w-full rounded-xl border border-line bg-white px-4 text-base outline-none focus-visible:border-accent-dark"
+                className="h-[52px] w-full rounded-xl border border-line bg-white px-4 text-base text-ink placeholder:text-muted outline-none focus-visible:border-accent-dark"
                 placeholder="budi@email.com"
               />
             </div>
@@ -76,15 +78,25 @@ export function Masuk() {
               >
                 Kata sandi
               </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-[52px] w-full rounded-xl border border-line bg-white px-4 text-base outline-none focus-visible:border-accent-dark"
-                placeholder="••••••••••"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-[52px] w-full rounded-xl border border-line bg-white pl-4 pr-12 text-base text-ink placeholder:text-muted outline-none focus-visible:border-accent-dark"
+                  placeholder="••••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-ink transition-colors cursor-pointer"
+                  aria-label={showPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                >
+                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                </button>
+              </div>
             </div>
 
             <button

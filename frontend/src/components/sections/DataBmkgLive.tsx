@@ -9,6 +9,7 @@ import { jamDari, namaHari, useCuaca, type CuacaData } from "@/hooks/useCuaca";
 import { useLokasi, type LokasiStatus } from "@/hooks/useLokasi";
 import { motion } from "motion/react";
 import { useReveal } from "@/components/motion/Reveal";
+import { WordRevealHeading } from "@/components/motion/WordRevealHeading";
 import { useCariLokasi } from "@/hooks/useCariLokasi";
 
 type Tersedia = Extract<CuacaData["cuaca"], { tersedia: true }>;
@@ -280,9 +281,9 @@ export function DataBmkgLive() {
       <Gelombang className="absolute inset-x-0 top-0 -translate-y-[calc(100%-1px)] text-night" />
       <div className="shell">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16">
-          <h2 className="t-h2">
+          <WordRevealHeading className="t-h2 text-white">
             Cuaca dibaca di kelurahan rumahmu, bukan di kota secara umum.
-          </h2>
+          </WordRevealHeading>
           <div>
             <p className="max-w-[52ch] t-lead text-mist">
               Prakiraan ini diambil langsung dari BMKG untuk desa atau kelurahan terdekat dengan lokasimu.

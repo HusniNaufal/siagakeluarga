@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { useReveal } from "@/components/motion/Reveal";
+import { WordRevealHeading } from "@/components/motion/WordRevealHeading";
 import { Cincin } from "@/components/ui/Grafis";
 import { GambarBagikan, GambarKeluarga, GambarRute } from "@/components/ui/LangkahGambar";
 
@@ -27,17 +28,18 @@ export function CaraKerja() {
     <section id="cara-kerja" className="relative scroll-mt-20 overflow-hidden bg-base py-20 md:py-28">
       <Cincin className="absolute top-0 right-0 hidden w-[290px] lg:block" />
       <div className="shell">
-        <h2 className="max-w-[16ch] t-h2 text-ink">
+        <WordRevealHeading className="max-w-[16ch] t-h2 text-ink">
           Tiga langkah, sekitar sepuluh menit.
-        </h2>
+        </WordRevealHeading>
 
         <ol className="mt-14 border-t border-line">
           {STEPS.map((step, i) => (
             <motion.li
               {...reveal(i)}
+              whileHover={{ x: 6, transition: { type: "spring", stiffness: 350, damping: 25 } }}
               initial={{ opacity: 0, y: 20 }}
               key={step.title}
-              className="grid gap-3 border-b border-line py-8 md:grid-cols-[72px_1.1fr_1fr_120px] md:gap-8 md:py-10"
+              className="grid gap-3 border-b border-line py-8 transition-colors hover:bg-surface/50 rounded-xl px-2 md:grid-cols-[72px_1.1fr_1fr_120px] md:gap-8 md:py-10"
             >
               <span className="font-display tabular-nums text-[28px] leading-none font-semibold text-accent-dark md:pt-1">
                 {i + 1}
