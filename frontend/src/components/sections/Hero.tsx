@@ -49,13 +49,125 @@ function ChapterLayer({
     [start, start + 0.03, mid, end - 0.03, end],
     [0, 1, 1, 1, 0],
   );
-  if (chapter.key !== "badai") return null;
-  return (
-    <motion.div
-      className="pointer-events-none absolute inset-0 bg-night/55"
-      style={{ opacity: reduce ? 1 : opacity }}
-    />
-  );
+
+  // Babak Hujan: rintik hujan lembut
+  if (chapter.key === "hujan") {
+    return (
+      <motion.div
+        className="pointer-events-none absolute inset-0 overflow-hidden bg-night/35"
+        style={{ opacity: reduce ? 1 : opacity }}
+      >
+        <svg
+          viewBox="0 0 1440 900"
+          className="absolute inset-0 h-full w-full pointer-events-none"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          {Array.from({ length: 20 }).map((_, idx) => {
+            const x1 = 200 + ((idx * 65) % 1100);
+            const y1 = 60 + ((idx * 85) % 700);
+            return (
+              <line
+                key={idx}
+                x1={x1}
+                y1={y1}
+                x2={x1 - 12}
+                y2={y1 + 55}
+                stroke="#E2E8F0"
+                strokeOpacity="0.32"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            );
+          })}
+        </svg>
+      </motion.div>
+    );
+  }
+
+  // Babak Badai: Sambaran petir dramatis + kilatan cahaya (lightning flash)
+  if (chapter.key === "badai") {
+    return (
+      <motion.div
+        className="pointer-events-none absolute inset-0 overflow-hidden bg-night/65"
+        style={{ opacity: reduce ? 1 : opacity }}
+      >
+        {/* Glow langit saat badai */}
+        <div
+          className="pointer-events-none absolute top-[-50px] left-1/2 h-[750px] w-[950px] -translate-x-1/2 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(147, 197, 253, 0.28) 0%, rgba(59, 130, 246, 0.08) 45%, transparent 70%)",
+          }}
+        />
+
+        {/* Sambaran Kilat Petir Realistis & Cahaya Layar (Flash) */}
+        {!reduce && (
+          <>
+            <motion.div
+              className="absolute inset-0 bg-white"
+              animate={{ opacity: [0, 0, 0.28, 0.04, 0.38, 0, 0, 0.16, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8 }}
+            />
+
+            <svg
+              viewBox="0 0 1440 900"
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              {/* Kilat Utama */}
+              <motion.path
+                d="M 748 40 L 730 142 L 758 148 L 732 260 L 760 268 L 720 390 L 738 395 L 710 490"
+                fill="none"
+                stroke="#F0F9FF"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="drop-shadow(0 0 10px rgba(186, 230, 253, 0.95))"
+                animate={{ opacity: [0, 0, 1, 0.15, 1, 0, 0, 0.75, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8 }}
+              />
+              {/* Cabang Kilat 1 */}
+              <motion.path
+                d="M 732 260 L 700 310 L 712 318 L 685 370"
+                fill="none"
+                stroke="#BAE6FD"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                filter="drop-shadow(0 0 6px rgba(186, 230, 253, 0.8))"
+                animate={{ opacity: [0, 0, 0.9, 0.1, 0.85, 0, 0, 0.6, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8 }}
+              />
+              {/* Kilat Samping Kanan */}
+              <motion.path
+                d="M 988 30 L 974 114 L 996 120 L 972 220 L 990 228 L 968 320"
+                fill="none"
+                stroke="#BAE6FD"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="drop-shadow(0 0 8px rgba(147, 197, 253, 0.85))"
+                animate={{ opacity: [0, 0, 0.95, 0.1, 0.9, 0, 0, 0.5, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8, delay: 0.05 }}
+              />
+              {/* Kilat Samping Kiri */}
+              <motion.path
+                d="M 410 60 L 430 135 L 412 142 L 428 220"
+                fill="none"
+                stroke="#E0F2FE"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                filter="drop-shadow(0 0 6px rgba(224, 242, 254, 0.75))"
+                animate={{ opacity: [0, 0, 0, 0, 0.85, 0, 0.4, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity, repeatDelay: 1.8, delay: 0.12 }}
+              />
+            </svg>
+          </>
+        )}
+      </motion.div>
+    );
+  }
+
+  return null;
 }
 
 function ChapterCopy({ index }: { index: number }) {
